@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#04080f"/>
+  <rect x="64" y="64" width="384" height="384" rx="48" fill="#080f1e" stroke="#f59e0b" stroke-width="4"/>
+  <polygon points="256,128 128,256 384,256" fill="#f59e0b"/>
+  <rect x="176" y="256" width="160" height="128" fill="#f59e0b"/>
+  <rect x="224" y="310" width="64" height="74" fill="#04080f" rx="4"/>
+  <text x="380" y="180" font-family="Helvetica,Arial" font-size="80" font-weight="bold" fill="#10b981">€</text>
+</svg>

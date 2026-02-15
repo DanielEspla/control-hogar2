@@ -1,92 +1,99 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Control Hogar — Gastos Casa</title>
-  <meta name="description" content="Panel de control de gastos del hogar para autónomos"/>
-  <meta name="theme-color" content="#04080f"/>
-  <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-  <meta name="apple-mobile-web-app-title" content="CtrlHogar"/>
-  <link rel="manifest" href="manifest.json"/>
-  <link rel="icon" href="icon.svg" type="image/svg+xml"/>
-  <link rel="apple-touch-icon" href="icon.svg"/>
+  <meta name="description" content="Panel de control de gastos del hogar para autónomos" />
+  <meta name="theme-color" content="#04080f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CtrlHogar" />
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>body{margin:0;padding:0}</style>
+  <style>
+    body {
+      margin: 0;
+      padding: 0
+    }
+  </style>
 </head>
+
 <body>
   <div id="root"></div>
   <script>
     window.storage = {
-      get: function(key) { return Promise.resolve({ value: localStorage.getItem(key) }); },
-      set: function(key, val) { localStorage.setItem(key, val); return Promise.resolve(); }
+      get: function (key) { return Promise.resolve({ value: localStorage.getItem(key) }); },
+      set: function (key, val) { localStorage.setItem(key, val); return Promise.resolve(); }
     };
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(function(e) { console.log('SW error:', e); });
+      navigator.serviceWorker.register('sw.js').catch(function (e) { console.log('SW error:', e); });
     }
   </script>
   <script type="text/babel">
     const { useState, useEffect, useCallback } = React;
-const FREQ = [
-  { value: "mensual", label: "Mensual", months: 1 },
-  { value: "bimensual", label: "Bimensual", months: 2 },
-  { value: "trimestral", label: "Trimestral", months: 3 },
-  { value: "anual", label: "Anual", months: 12 },
-];
-const MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
-  "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
-const PRESET_GASTOS = [
-  { id: "hipoteca", name: "Hipoteca", icon: "🏠", irpf: false, irpfNote: "No deducible directamente. Solo intereses si usas parte como oficina.", color: "#f59e0b" },
-  { id: "luz", name: "Luz / Electricidad", icon: "💡", irpf: true, irpfNote: "30% deducible si trabajas desde casa (proporcional a m² de oficina).", color: "#eab308" },
-  { id: "tlf", name: "Teléfono / Internet", icon: "📱", irpf: true, irpfNote: "Hasta 50% deducible por uso profesional. 100% si línea exclusiva.", color: "#3b82f6" },
-  { id: "plataformas", name: "Plataformas", icon: "📺", irpf: false, irpfNote: "No deducible salvo suscripciones estrictamente profesionales.", color: "#8b5cf6" },
-  { id: "seguro_coche", name: "Seguro Coche", icon: "🚗", irpf: true, irpfNote: "Deducible si el vehículo está afecto a la actividad profesional.", color: "#10b981" },
-  { id: "seguro_casa", name: "Seguro Casa / Hogar", icon: "🔒", irpf: true, irpfNote: "Proporcional a m² de oficina si trabajas desde casa.", color: "#06b6d4" },
-];
-const VAR_CATS = [
-  { key: "gasolina", label: "Gasolina", icon: "⛽", color: "#f59e0b", irpf: true },
-  { key: "salidas", label: "Salidas / Ocio", icon: "🍻", color: "#ec4899", irpf: false },
-  { key: "super", label: "Súper / Comida", icon: "🛒", color: "#10b981", irpf: false },
-  { key: "farmacia", label: "Farmacia", icon: "💊", color: "#06b6d4", irpf: false },
-  { key: "ropa", label: "Ropa / Personal", icon: "👕", color: "#8b5cf6", irpf: false },
-  { key: "transporte", label: "Taxi / Transporte", icon: "🚕", color: "#6366f1", irpf: true },
-  { key: "eventuales", label: "Eventuales", icon: "⚡", color: "#f97316", irpf: false },
-  { key: "otros", label: "Otros", icon: "📦", color: "#64748b", irpf: false },
-];
+    const FREQ = [
+      { value: "mensual", label: "Mensual", months: 1 },
+      { value: "bimensual", label: "Bimensual", months: 2 },
+      { value: "trimestral", label: "Trimestral", months: 3 },
+      { value: "anual", label: "Anual", months: 12 },
+    ];
+    const MONTHS = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+      "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+    const PRESET_GASTOS = [
+      { id: "hipoteca", name: "Hipoteca", icon: "🏠", irpf: false, irpfNote: "No deducible directamente. Solo intereses si usas parte como oficina.", color: "#f59e0b" },
+      { id: "luz", name: "Luz / Electricidad", icon: "💡", irpf: true, irpfNote: "30% deducible si trabajas desde casa (proporcional a m² de oficina).", color: "#eab308" },
+      { id: "tlf", name: "Teléfono / Internet", icon: "📱", irpf: true, irpfNote: "Hasta 50% deducible por uso profesional. 100% si línea exclusiva.", color: "#3b82f6" },
+      { id: "plataformas", name: "Plataformas", icon: "📺", irpf: false, irpfNote: "No deducible salvo suscripciones estrictamente profesionales.", color: "#8b5cf6" },
+      { id: "seguro_coche", name: "Seguro Coche", icon: "🚗", irpf: true, irpfNote: "Deducible si el vehículo está afecto a la actividad profesional.", color: "#10b981" },
+      { id: "seguro_casa", name: "Seguro Casa / Hogar", icon: "🔒", irpf: true, irpfNote: "Proporcional a m² de oficina si trabajas desde casa.", color: "#06b6d4" },
+    ];
+    const VAR_CATS = [
+      { key: "gasolina", label: "Gasolina", icon: "⛽", color: "#f59e0b", irpf: true },
+      { key: "salidas", label: "Salidas / Ocio", icon: "🍻", color: "#ec4899", irpf: false },
+      { key: "super", label: "Súper / Comida", icon: "🛒", color: "#10b981", irpf: false },
+      { key: "farmacia", label: "Farmacia", icon: "💊", color: "#06b6d4", irpf: false },
+      { key: "ropa", label: "Ropa / Personal", icon: "👕", color: "#8b5cf6", irpf: false },
+      { key: "transporte", label: "Taxi / Transporte", icon: "🚕", color: "#6366f1", irpf: true },
+      { key: "eventuales", label: "Eventuales", icon: "⚡", color: "#f97316", irpf: false },
+      { key: "otros", label: "Otros", icon: "📦", color: "#64748b", irpf: false },
+    ];
 
-const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
-const today = new Date();
-const todayStr = today.toISOString().slice(0, 10);
-const STORAGE_KEY = "gastos-hogar-v5";
+    const uid = () => `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    const today = new Date();
+    const todayStr = today.toISOString().slice(0, 10);
+    const STORAGE_KEY = "gastos-hogar-v5";
 
-function monthlyEquiv(item) {
-  const f = FREQ.find(f => f.value === item.frequency);
-  return parseFloat(item.amount || 0) / (f?.months || 1);
-}
-function isDue(item, year, month) {
-  const diff = (year - (item.startYear || today.getFullYear())) * 12
-    + (month - (item.startMonth ?? today.getMonth()));
-  if (diff < 0) return false;
-  return diff % (FREQ.find(f => f.value === item.frequency)?.months || 1) === 0;
-}
-async function loadData() {
-  try { const r = await window.storage.get(STORAGE_KEY); if (r?.value) return JSON.parse(r.value); } catch (_) { }
-  return null;
-}
-async function saveData(d) {
-  try { await window.storage.set(STORAGE_KEY, JSON.stringify(d)); } catch (_) { }
-}
+    function monthlyEquiv(item) {
+      const f = FREQ.find(f => f.value === item.frequency);
+      return parseFloat(item.amount || 0) / (f?.months || 1);
+    }
+    function isDue(item, year, month) {
+      const diff = (year - (item.startYear || today.getFullYear())) * 12
+        + (month - (item.startMonth ?? today.getMonth()));
+      if (diff < 0) return false;
+      return diff % (FREQ.find(f => f.value === item.frequency)?.months || 1) === 0;
+    }
+    async function loadData() {
+      try { const r = await window.storage.get(STORAGE_KEY); if (r?.value) return JSON.parse(r.value); } catch (_) { }
+      return null;
+    }
+    async function saveData(d) {
+      try { await window.storage.set(STORAGE_KEY, JSON.stringify(d)); } catch (_) { }
+    }
 
-// ─── THEME ───
-const T = {
-  bg: "#04080f", card: "#080f1e", border: "#0f1e35", border2: "#1a2d47",
-  text: "#c8d6e8", muted: "#3a5070", faint: "#0d1930",
-  gold: "#f59e0b", green: "#10b981", blue: "#3b82f6", red: "#ef4444", purple: "#8b5cf6",
-};
-const css = `
+    // ─── THEME ───
+    const T = {
+      bg: "#04080f", card: "#080f1e", border: "#0f1e35", border2: "#1a2d47",
+      text: "#c8d6e8", muted: "#3a5070", faint: "#0d1930",
+      gold: "#f59e0b", green: "#10b981", blue: "#3b82f6", red: "#ef4444", purple: "#8b5cf6",
+    };
+    const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap');
   *{box-sizing:border-box;margin:0;padding:0}
   body{background:${T.bg};font-family:'DM Sans',sans-serif}
@@ -102,746 +109,768 @@ const css = `
   @keyframes fi{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
   select option{background:#0d1930;color:#c8d6e8}
   input[type=date]::-webkit-calendar-picker-indicator{filter:invert(0.4)}
+
+  /* Mobile Responsive */
+  .grid-main { display: grid; grid-template-columns: 290px 1fr 250px; gap: 12px; }
+  .grid-kpi { display: grid; grid-template-columns: repeat(5,1fr); gap: 9px; margin-bottom: 12px; }
+  .grid-saldo { background: #080f1e; border: 1px solid #0f1e35; border-radius: 12px; padding: 14px 20px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0; margin-bottom: 12px; }
+  .grid-vars { display: grid; grid-template-columns: 1fr 300px; gap: 12px; }
+  .grid-irpf { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .top-bar { background: #040b19; border-bottom: 1px solid ${T.border}; padding: 10px 18px; display: flex; alignItems: center; justify-content: space-between; position: sticky; top: 0; z-index: 20; }
+  
+  @media (max-width: 900px) {
+    .grid-main { grid-template-columns: 1fr; }
+    .grid-kpi { grid-template-columns: 1fr 1fr; }
+    .grid-kpi > div:last-child { grid-column: span 2; }
+    .grid-saldo { grid-template-columns: 1fr; gap: 15px; text-align: center; }
+    .grid-saldo > div { border: none !important; padding: 10px 0 !important; text-align: center !important; }
+    .grid-saldo > div > div { justify-content: center; }
+    .grid-vars { grid-template-columns: 1fr; }
+    .grid-irpf { grid-template-columns: 1fr; }
+    .top-bar { flex-direction: column; gap: 10px; align-items: stretch; }
+    .top-bar > div { justify-content: center; }
+  }
 `;
-const card = (x = {}) => ({ background: T.card, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "14px", ...x });
-const inp = (x = {}) => ({ background: T.faint, border: `1px solid ${T.border2}`, borderRadius: "7px", padding: "8px 11px", color: T.text, fontSize: "13px", width: "100%", transition: "border-color 0.15s", ...x });
-const lbl = { fontSize: "10px", color: T.muted, display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: ".05em" };
+    const card = (x = {}) => ({ background: T.card, border: `1px solid ${T.border}`, borderRadius: "12px", padding: "14px", ...x });
+    const inp = (x = {}) => ({ background: T.faint, border: `1px solid ${T.border2}`, borderRadius: "7px", padding: "8px 11px", color: T.text, fontSize: "13px", width: "100%", transition: "border-color 0.15s", ...x });
+    const lbl = { fontSize: "10px", color: T.muted, display: "block", marginBottom: "4px", textTransform: "uppercase", letterSpacing: ".05em" };
 
-// ─── MINI COMPONENTS ───
-function STitle({ children, action }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
-      <span style={{ fontSize: "10px", fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: ".08em" }}>{children}</span>
-      {action}
-    </div>
-  );
-}
-function AddBtn({ open, onClick }) {
-  return (
-    <button onClick={onClick} style={{
-      background: open ? T.faint : `${T.gold}18`, border: `1px solid ${open ? T.border2 : T.gold + "44"}`,
-      color: open ? T.muted : T.gold, borderRadius: "6px", padding: "4px 11px", fontSize: "11px", fontWeight: 700,
-    }}>{open ? "✕" : "+ Añadir"}</button>
-  );
-}
-function MInp({ value, onChange, placeholder, color, mono, right, style = {} }) {
-  const [local, setLocal] = useState(String(value ?? ""));
-  useEffect(() => { setLocal(String(value ?? "")); }, [value]);
-  return (
-    <input
-      className={mono ? "mono" : ""}
-      value={local}
-      onChange={e => setLocal(e.target.value)}
-      onBlur={() => onChange(local)}
-      placeholder={placeholder}
-      style={{ background: "transparent", border: "none", color: color || T.text, fontSize: "13px", fontWeight: 600, width: "100%", textAlign: right ? "right" : "left", ...style }}
-    />
-  );
-}
-function FSel({ value, onChange }) {
-  return (
-    <select value={value} onChange={e => onChange(e.target.value)}
-      style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px", cursor: "pointer" }}>
-      {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-    </select>
-  );
-}
-function IrpfTip({ irpf, note }) {
-  const [show, setShow] = useState(false);
-  const color = irpf ? T.green : T.muted;
-  return (
-    <div style={{ position: "relative", display: "inline-block" }} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
-      <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: `${color}18`, border: `1px solid ${color}44`, color, borderRadius: "4px", padding: "1px 5px", fontSize: "9px", fontWeight: 700, whiteSpace: "nowrap", cursor: "help" }}>
-        {irpf ? "✓" : "✗"} IRPF
-      </span>
-      {show && note && (
-        <div style={{ position: "absolute", bottom: "110%", left: "50%", transform: "translateX(-50%)", background: "#111e36", border: `1px solid ${T.border2}`, borderRadius: "8px", padding: "8px 10px", width: "210px", zIndex: 50, marginBottom: "4px", fontSize: "11px", color: T.text, lineHeight: "1.5", boxShadow: "0 8px 24px #000b" }}>
-          {note}
+    // ─── MINI COMPONENTS ───
+    function STitle({ children, action }) {
+      return (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px" }}>
+          <span style={{ fontSize: "10px", fontWeight: 700, color: T.muted, textTransform: "uppercase", letterSpacing: ".08em" }}>{children}</span>
+          {action}
         </div>
-      )}
-    </div>
-  );
-}
-
-// ── SALDO WIDGET ──
-function SaldoWidget({ saldo, setSaldo, totalIncome, totalFixed, spentVar, autoSave, onSave }) {
-  const saldoNum = parseFloat(String(saldo).replace(",", ".")) || 0;
-  const projected = saldoNum + totalIncome - totalFixed - spentVar - autoSave;
-  const posColor = projected >= 0 ? "#10b981" : "#ef4444";
-  return (
-    <div style={{ background: "#080f1e", border: "1px solid #0f1e35", borderRadius: "12px", padding: "14px 20px", display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", gap: "0", marginBottom: "12px" }}>
-      {/* LEFT: desglose */}
-      <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
-        {[
-          { label: "Ingresos", val: totalIncome, color: "#10b981", sign: "+" },
-          { label: "Fijos", val: totalFixed, color: "#f59e0b", sign: "−" },
-          { label: "Variables", val: spentVar, color: "#8b5cf6", sign: "−" },
-          { label: "Ahorro", val: autoSave, color: "#3b82f6", sign: "−" },
-        ].map((r, i) => (
-          <div key={i}>
-            <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "3px" }}>{r.sign} {r.label}</p>
-            <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "14px", fontWeight: 700, color: r.color }}>{r.val.toFixed(0)} €</p>
-          </div>
-        ))}
-      </div>
-      {/* CENTER: saldo hero */}
-      <div style={{ textAlign: "center", padding: "0 32px", borderLeft: "1px solid #0f1e35", borderRight: "1px solid #0f1e35" }}>
-        <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: "6px" }}>💳 Saldo actual</p>
-        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "4px" }}>
-          <input
-            style={{ fontFamily: "'DM Mono',monospace", fontSize: "42px", fontWeight: 800, color: "#3b82f6", background: "transparent", border: "none", outline: "none", textAlign: "center", width: "180px", letterSpacing: "-1px" }}
-            value={saldo} onChange={e => setSaldo(e.target.value)} onBlur={onSave} placeholder="0"
-          />
-          <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "22px", fontWeight: 700, color: "#3b82f655" }}>€</span>
-        </div>
-      </div>
-      {/* RIGHT: proyección */}
-      <div style={{ textAlign: "right" }}>
-        <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: "6px" }}>Proyección fin de mes</p>
-        <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "38px", fontWeight: 800, color: posColor, letterSpacing: "-1px", lineHeight: 1 }}>{projected.toFixed(0)} <span style={{ fontSize: "20px" }}>€</span></p>
-        <span style={{ display: "inline-block", marginTop: "5px", background: `${posColor}15`, border: `1px solid ${posColor}33`, borderRadius: "20px", padding: "2px 10px", fontSize: "11px", color: posColor, fontWeight: 700 }}>
-          {projected >= 0 ? "✓ En positivo" : "⚠ Déficit"}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-// ─── RESET MODAL ───
-function ResetModal({ onConfirm, onCancel }) {
-  return (
-    <div style={{ position: "fixed", inset: 0, background: "#000c", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <div className="fade-in" style={{ background: "#0a1628", border: `1px solid ${T.red}44`, borderRadius: "14px", padding: "28px", width: "340px", boxShadow: "0 20px 60px #000" }}>
-        <p style={{ fontSize: "20px", fontWeight: 800, marginBottom: "8px" }}>⚠ Reset completo</p>
-        <p style={{ fontSize: "13px", color: T.muted, lineHeight: "1.6", marginBottom: "20px" }}>
-          Se borrarán <strong style={{ color: T.text }}>todos los datos</strong>: ingresos, recibos, gastos variables y configuración.<br /><br />
-          Esta acción <strong style={{ color: T.red }}>no se puede deshacer</strong>.
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-          <button onClick={onCancel} style={{ background: T.faint, border: `1px solid ${T.border2}`, borderRadius: "8px", padding: "10px", color: T.muted, fontWeight: 700, fontSize: "13px" }}>
-            Cancelar
-          </button>
-          <button onClick={onConfirm} style={{ background: `${T.red}22`, border: `1px solid ${T.red}55`, borderRadius: "8px", padding: "10px", color: T.red, fontWeight: 800, fontSize: "13px" }}>
-            Borrar todo
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ── FORM BLOCK (outside App — prevents remount on every keystroke) ──
-function FormBlock({ children, onSave, onCancel }) {
-  return (
-    <div className="fade-in" style={{ background: "#0d1930", border: "1px solid #1a2d47", borderRadius: "12px", padding: "14px", marginBottom: "10px" }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
-        {children}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px", marginTop: "2px" }}>
-          <button onClick={onSave} style={{ background: "#10b981", border: "none", borderRadius: "7px", padding: "9px", color: "#04080f", fontWeight: 800, fontSize: "13px" }}>✓ Guardar</button>
-          <button onClick={onCancel} style={{ background: "transparent", border: "1px solid #1a2d47", borderRadius: "7px", padding: "9px", color: "#3a5070", fontSize: "12px" }}>Cancelar</button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── MAIN ───
-function App() {
-  const [tab, setTab] = useState("resumen");
-  const [calDate, setCalDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
-  const [selDay, setSelDay] = useState(null);
-  const [ready, setReady] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [showReset, setShowReset] = useState(false);
-
-  const [ingresos, setIngresos] = useState([]);
-  const [alquileres, setAlquileres] = useState([]);
-  const [gastosF, setGastosF] = useState(PRESET_GASTOS.map(p => ({ ...p, enabled: false, amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() })));
-  const [gastosExtra, setGastosExtra] = useState([]);
-  const [varItems, setVarItems] = useState([]);
-  const [savingsPct, setSavingsPct] = useState("10");
-  const [weeklyLimit, setWeeklyLimit] = useState("");
-  const [saldo, setSaldo] = useState("");
-
-  const [showAddIngreso, setShowAddIngreso] = useState(false);
-  const [showAddAlquiler, setShowAddAlquiler] = useState(false);
-  const [showAddExtra, setShowAddExtra] = useState(false);
-  const [newVar, setNewVar] = useState({ cat: "gasolina", amount: "", note: "", date: todayStr });
-
-  const blankIng = { name: "", amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() };
-  const blankExt = { name: "", icon: "📌", amount: "", frequency: "mensual", dayOfMonth: 1, irpf: false, irpfNote: "", color: "#64748b" };
-  const [newIngreso, setNewIngreso] = useState({ ...blankIng });
-  const [newAlquiler, setNewAlquiler] = useState({ ...blankIng, name: "Alquiler" });
-  const [newExtra, setNewExtra] = useState({ ...blankExt });
-
-  // ── LOAD ──
-  useEffect(() => {
-    loadData().then(d => {
-      if (d) {
-        if (d.ingresos) setIngresos(d.ingresos);
-        if (d.alquileres) setAlquileres(d.alquileres);
-        if (d.gastosF) setGastosF(d.gastosF);
-        if (d.gastosExtra) setGastosExtra(d.gastosExtra);
-        if (d.varItems) setVarItems(d.varItems);
-        if (d.savingsPct) setSavingsPct(d.savingsPct);
-        if (d.weeklyLimit) setWeeklyLimit(d.weeklyLimit);
-        if (d.saldo !== undefined) setSaldo(d.saldo);
-      }
-      setReady(true);
-    });
-  }, []);
-
-  // ── SAVE ──
-  const persist = useCallback((patch = {}) => {
-    const d = { ingresos, alquileres, gastosF, gastosExtra, varItems, savingsPct, weeklyLimit, saldo, ...patch };
-    saveData(d).then(() => { setSaved(true); setTimeout(() => setSaved(false), 1500); });
-  }, [ingresos, alquileres, gastosF, gastosExtra, varItems, savingsPct, weeklyLimit, saldo]);
-
-  // ── RESET ──
-  const doReset = async () => {
-    const fresh = PRESET_GASTOS.map(p => ({ ...p, enabled: false, amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() }));
-    setIngresos([]); setAlquileres([]); setGastosF(fresh); setGastosExtra([]);
-    setVarItems([]); setSavingsPct("10"); setWeeklyLimit(""); setSaldo("");
-    await saveData({ ingresos: [], alquileres: [], gastosF: fresh, gastosExtra: [], varItems: [], savingsPct: "10", weeklyLimit: "", saldo: "" });
-    setShowReset(false); setSaved(true); setTimeout(() => setSaved(false), 1500);
-  };
-
-  // ── COMPUTED ──
-  const calYear = calDate.getFullYear();
-  const calMonth = calDate.getMonth();
-
-  const totalIngresos = ingresos.reduce((s, i) => s + monthlyEquiv(i), 0);
-  const totalAlquiler = alquileres.reduce((s, a) => s + monthlyEquiv(a), 0);
-  const totalIncome = totalIngresos + totalAlquiler;
-  const activeF = gastosF.filter(g => g.enabled);
-  const totalFixed = [...activeF, ...gastosExtra].reduce((s, g) => s + monthlyEquiv(g), 0);
-  const autoSave = totalIncome * (parseFloat(savingsPct) || 0) / 100;
-  const varBudget = totalIncome - totalFixed - autoSave;
-  const weeklyCalc = weeklyLimit ? parseFloat(weeklyLimit) : Math.max(0, varBudget / 4.3);
-
-  const startOfWeek = new Date(today);
-  startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-  startOfWeek.setHours(0, 0, 0, 0);
-
-  const thisMonthVar = varItems.filter(e => { const d = new Date(e.date); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); });
-  const spentMonth = thisMonthVar.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-  const weekEntries = varItems.filter(e => new Date(e.date) >= startOfWeek);
-  const spentWeek = weekEntries.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-  const weekLeft = weeklyCalc - spentWeek;
-
-  // Calendar
-  const calOffset = ((new Date(calYear, calMonth, 1).getDay() || 7) - 1);
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-  const allFDue = [...activeF, ...gastosExtra].filter(g => isDue(g, calYear, calMonth));
-  const allIDue = [...ingresos, ...alquileres].filter(i => isDue(i, calYear, calMonth));
-  const getDayF = d => allFDue.filter(g => parseInt(g.dayOfMonth) === d);
-  const getDayI = d => allIDue.filter(i => parseInt(i.dayOfMonth) === d);
-
-  const irpfItems = [...activeF, ...gastosExtra].filter(g => g.irpf).map(g => ({ name: g.name, monthly: monthlyEquiv(g), note: g.irpfNote }));
-  const irpfTotal = irpfItems.reduce((s, i) => s + i.monthly, 0);
-
-  // ── CRUD ──
-  const addIngreso = () => { if (!newIngreso.amount) return; const u = [...ingresos, { ...newIngreso, id: uid(), name: newIngreso.name || "Ingreso" }]; setIngresos(u); persist({ ingresos: u }); setNewIngreso({ ...blankIng }); setShowAddIngreso(false); };
-  const delIngreso = id => { const u = ingresos.filter(i => i.id !== id); setIngresos(u); persist({ ingresos: u }); };
-  const editIngreso = (id, f, v) => setIngresos(prev => prev.map(i => i.id === id ? { ...i, [f]: v } : i));
-  const blurIngreso = () => setIngresos(prev => { persist({ ingresos: prev }); return prev; });
-  const addAlquiler = () => { if (!newAlquiler.amount) return; const u = [...alquileres, { ...newAlquiler, id: uid(), name: newAlquiler.name || "Alquiler" }]; setAlquileres(u); persist({ alquileres: u }); setNewAlquiler({ ...blankIng, name: "Alquiler" }); setShowAddAlquiler(false); };
-  const delAlquiler = id => { const u = alquileres.filter(a => a.id !== id); setAlquileres(u); persist({ alquileres: u }); };
-  const editAlquiler = (id, f, v) => setAlquileres(prev => prev.map(a => a.id === id ? { ...a, [f]: v } : a));
-  const blurAlquiler = () => setAlquileres(prev => { persist({ alquileres: prev }); return prev; });
-  const toggleGasto = id => { const u = gastosF.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g); setGastosF(u); persist({ gastosF: u }); };
-  const editGasto = (id, f, v) => { const u = gastosF.map(g => g.id === id ? { ...g, [f]: v } : g); setGastosF(u); persist({ gastosF: u }); };
-  const addExtra = () => { if (!newExtra.name || !newExtra.amount) return; const u = [...gastosExtra, { ...newExtra, id: uid() }]; setGastosExtra(u); persist({ gastosExtra: u }); setNewExtra({ ...blankExt }); setShowAddExtra(false); };
-  const delExtra = id => { const u = gastosExtra.filter(g => g.id !== id); setGastosExtra(u); persist({ gastosExtra: u }); };
-  const editExtra = (id, f, v) => setGastosExtra(prev => prev.map(g => g.id === id ? { ...g, [f]: v } : g));
-  const blurExtra = () => setGastosExtra(prev => { persist({ gastosExtra: prev }); return prev; });
-  const addVar = () => { if (!newVar.amount) return; const u = [...varItems, { ...newVar, id: uid(), amount: parseFloat(newVar.amount) }]; setVarItems(u); persist({ varItems: u }); setNewVar({ cat: "gasolina", amount: "", note: "", date: todayStr }); };
-  const delVar = id => { const u = varItems.filter(e => e.id !== id); setVarItems(u); persist({ varItems: u }); };
-
-  if (!ready) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: T.bg, color: T.muted, fontFamily: "'DM Sans',sans-serif" }}>Cargando...</div>;
-
-  return (
-    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Sans',sans-serif" }}>
-      <style>{css}</style>
-      {showReset && <ResetModal onConfirm={doReset} onCancel={() => setShowReset(false)} />}
-
-      {/* TOP BAR */}
-      <div style={{ background: "#040b19", borderBottom: `1px solid ${T.border}`, padding: "10px 18px", display: "flex", alignItems: "center", justifyContent: "space-between", position: "sticky", top: 0, zIndex: 20 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-.3px" }}>Control Hogar</span>
-          <span style={{ background: `${T.gold}18`, border: `1px solid ${T.gold}44`, color: T.gold, borderRadius: "4px", padding: "1px 7px", fontSize: "10px", fontWeight: 700 }}>Autónomo</span>
-          {saved && <span className="fade-in" style={{ fontSize: "11px", color: T.green }}>✓ Guardado</span>}
-        </div>
-
-        <div style={{ display: "flex", gap: "4px" }}>
-          {[["resumen", "📊 Resumen"], ["variables", "💳 Variables"], ["irpf", "📋 IRPF"]].map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? "#0d1930" : "transparent", border: `1px solid ${tab === k ? T.border2 : "transparent"}`, color: tab === k ? T.text : T.muted, borderRadius: "7px", padding: "6px 13px", fontSize: "12px", fontWeight: 600 }}>
-              {l}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <span className="mono" style={{ fontSize: "11px", color: T.muted }}>{today.getDate()} {MONTHS[today.getMonth()].slice(0, 3)} {today.getFullYear()}</span>
-          <button onClick={() => setShowReset(true)} style={{ background: `${T.red}15`, border: `1px solid ${T.red}44`, color: T.red, borderRadius: "6px", padding: "5px 11px", fontSize: "11px", fontWeight: 700 }}>
-            ↺ Reset
-          </button>
-        </div>
-      </div>
-
-      <div style={{ padding: "14px 18px" }}>
-
-        {/* KPIs */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: "9px", marginBottom: "12px" }}>
-          {[
-            { label: "Ingresos + Alquiler", val: totalIncome, color: T.green, note: "€/mes estimado" },
-            { label: "Gastos fijos / mes", val: totalFixed, color: T.gold, note: "€ equiv. mensual" },
-            { label: "Ahorro automático", val: autoSave, color: T.blue, note: `${savingsPct}% al cobrar` },
-            { label: "Variable disponible", val: varBudget, color: varBudget < 0 ? T.red : T.purple, note: "€/mes para vivir" },
-            { label: "Gasto esta semana", val: spentWeek, color: weekLeft < 0 ? T.red : "#94a3b8", note: `quedan ${Math.max(0, weekLeft).toFixed(0)} € / ${weeklyCalc.toFixed(0)} €` },
-          ].map((k, i) => (
-            <div key={i} style={card()}>
-              <p style={{ fontSize: "9px", color: T.muted, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "6px" }}>{k.label}</p>
-              <p className="mono" style={{ fontSize: "20px", fontWeight: 700, color: k.color }}>{parseFloat(k.val || 0).toFixed(0)}</p>
-              <p style={{ fontSize: "9px", color: T.muted, marginTop: "3px" }}>{k.note}</p>
+      );
+    }
+    function AddBtn({ open, onClick }) {
+      return (
+        <button onClick={onClick} style={{
+          background: open ? T.faint : `${T.gold}18`, border: `1px solid ${open ? T.border2 : T.gold + "44"}`,
+          color: open ? T.muted : T.gold, borderRadius: "6px", padding: "4px 11px", fontSize: "11px", fontWeight: 700,
+        }}>{open ? "✕" : "+ Añadir"}</button>
+      );
+    }
+    function MInp({ value, onChange, placeholder, color, mono, right, style = {} }) {
+      const [local, setLocal] = useState(String(value ?? ""));
+      useEffect(() => { setLocal(String(value ?? "")); }, [value]);
+      return (
+        <input
+          className={mono ? "mono" : ""}
+          value={local}
+          onChange={e => setLocal(e.target.value)}
+          onBlur={() => onChange(local)}
+          placeholder={placeholder}
+          style={{ background: "transparent", border: "none", color: color || T.text, fontSize: "13px", fontWeight: 600, width: "100%", textAlign: right ? "right" : "left", ...style }}
+        />
+      );
+    }
+    function FSel({ value, onChange }) {
+      return (
+        <select value={value} onChange={e => onChange(e.target.value)}
+          style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px", cursor: "pointer" }}>
+          {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </select>
+      );
+    }
+    function IrpfTip({ irpf, note }) {
+      const [show, setShow] = useState(false);
+      const color = irpf ? T.green : T.muted;
+      return (
+        <div style={{ position: "relative", display: "inline-block" }} onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: "3px", background: `${color}18`, border: `1px solid ${color}44`, color, borderRadius: "4px", padding: "1px 5px", fontSize: "9px", fontWeight: 700, whiteSpace: "nowrap", cursor: "help" }}>
+            {irpf ? "✓" : "✗"} IRPF
+          </span>
+          {show && note && (
+            <div style={{ position: "absolute", bottom: "110%", left: "50%", transform: "translateX(-50%)", background: "#111e36", border: `1px solid ${T.border2}`, borderRadius: "8px", padding: "8px 10px", width: "210px", zIndex: 50, marginBottom: "4px", fontSize: "11px", color: T.text, lineHeight: "1.5", boxShadow: "0 8px 24px #000b" }}>
+              {note}
             </div>
-          ))}
+          )}
         </div>
+      );
+    }
 
-        {/* SALDO */}
-        <SaldoWidget saldo={saldo} setSaldo={setSaldo} totalIncome={totalIncome} totalFixed={totalFixed} spentVar={spentMonth} autoSave={autoSave} onSave={() => persist({ saldo })} />
+    // ── SALDO WIDGET ──
+    function SaldoWidget({ saldo, setSaldo, totalIncome, totalFixed, spentVar, autoSave, onSave }) {
+      const saldoNum = parseFloat(String(saldo).replace(",", ".")) || 0;
+      const projected = saldoNum + totalIncome - totalFixed - spentVar - autoSave;
+      const posColor = projected >= 0 ? "#10b981" : "#ef4444";
+      return (
+        <div className="grid-saldo">
+          {/* LEFT: desglose */}
+          <div style={{ display: "flex", gap: "16px", alignItems: "center" }}>
+            {[
+              { label: "Ingresos", val: totalIncome, color: "#10b981", sign: "+" },
+              { label: "Fijos", val: totalFixed, color: "#f59e0b", sign: "−" },
+              { label: "Variables", val: spentVar, color: "#8b5cf6", sign: "−" },
+              { label: "Ahorro", val: autoSave, color: "#3b82f6", sign: "−" },
+            ].map((r, i) => (
+              <div key={i}>
+                <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".05em", marginBottom: "3px" }}>{r.sign} {r.label}</p>
+                <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "14px", fontWeight: 700, color: r.color }}>{r.val.toFixed(0)} €</p>
+              </div>
+            ))}
+          </div>
+          {/* CENTER: saldo hero */}
+          <div style={{ textAlign: "center", padding: "0 32px", borderLeft: "1px solid #0f1e35", borderRight: "1px solid #0f1e35" }}>
+            <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: "6px" }}>💳 Saldo actual</p>
+            <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: "4px" }}>
+              <input
+                style={{ fontFamily: "'DM Mono',monospace", fontSize: "42px", fontWeight: 800, color: "#3b82f6", background: "transparent", border: "none", outline: "none", textAlign: "center", width: "180px", letterSpacing: "-1px" }}
+                value={saldo} onChange={e => setSaldo(e.target.value)} onBlur={onSave} placeholder="0"
+              />
+              <span style={{ fontFamily: "'DM Mono',monospace", fontSize: "22px", fontWeight: 700, color: "#3b82f655" }}>€</span>
+            </div>
+          </div>
+          {/* RIGHT: proyección */}
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "9px", color: "#3a5070", textTransform: "uppercase", letterSpacing: ".08em", marginBottom: "6px" }}>Proyección fin de mes</p>
+            <p style={{ fontFamily: "'DM Mono',monospace", fontSize: "38px", fontWeight: 800, color: posColor, letterSpacing: "-1px", lineHeight: 1 }}>{projected.toFixed(0)} <span style={{ fontSize: "20px" }}>€</span></p>
+            <span style={{ display: "inline-block", marginTop: "5px", background: `${posColor}15`, border: `1px solid ${posColor}33`, borderRadius: "20px", padding: "2px 10px", fontSize: "11px", color: posColor, fontWeight: 700 }}>
+              {projected >= 0 ? "✓ En positivo" : "⚠ Déficit"}
+            </span>
+          </div>
+        </div>
+      );
+    }
 
-        {/* ══ RESUMEN ══ */}
-        {tab === "resumen" && (
-          <div style={{ display: "grid", gridTemplateColumns: "290px 1fr 250px", gap: "12px" }}>
+    // ─── RESET MODAL ───
+    function ResetModal({ onConfirm, onCancel }) {
+      return (
+        <div style={{ position: "fixed", inset: 0, background: "#000c", zIndex: 100, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="fade-in" style={{ background: "#0a1628", border: `1px solid ${T.red}44`, borderRadius: "14px", padding: "28px", width: "340px", boxShadow: "0 20px 60px #000" }}>
+            <p style={{ fontSize: "20px", fontWeight: 800, marginBottom: "8px" }}>⚠ Reset completo</p>
+            <p style={{ fontSize: "13px", color: T.muted, lineHeight: "1.6", marginBottom: "20px" }}>
+              Se borrarán <strong style={{ color: T.text }}>todos los datos</strong>: ingresos, recibos, gastos variables y configuración.<br /><br />
+              Esta acción <strong style={{ color: T.red }}>no se puede deshacer</strong>.
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+              <button onClick={onCancel} style={{ background: T.faint, border: `1px solid ${T.border2}`, borderRadius: "8px", padding: "10px", color: T.muted, fontWeight: 700, fontSize: "13px" }}>
+                Cancelar
+              </button>
+              <button onClick={onConfirm} style={{ background: `${T.red}22`, border: `1px solid ${T.red}55`, borderRadius: "8px", padding: "10px", color: T.red, fontWeight: 800, fontSize: "13px" }}>
+                Borrar todo
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-            {/* COL 1: INGRESOS */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+    // ── FORM BLOCK (outside App — prevents remount on every keystroke) ──
+    function FormBlock({ children, onSave, onCancel }) {
+      return (
+        <div className="fade-in" style={{ background: "#0d1930", border: "1px solid #1a2d47", borderRadius: "12px", padding: "14px", marginBottom: "10px" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "7px" }}>
+            {children}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px", marginTop: "2px" }}>
+              <button onClick={onSave} style={{ background: "#10b981", border: "none", borderRadius: "7px", padding: "9px", color: "#04080f", fontWeight: 800, fontSize: "13px" }}>✓ Guardar</button>
+              <button onClick={onCancel} style={{ background: "transparent", border: "1px solid #1a2d47", borderRadius: "7px", padding: "9px", color: "#3a5070", fontSize: "12px" }}>Cancelar</button>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
-              {/* Ingresos */}
-              <div style={card()}>
-                <STitle action={<AddBtn open={showAddIngreso} onClick={() => { setShowAddIngreso(!showAddIngreso); setNewIngreso({ ...blankIng }); }} />}>💵 Ingresos</STitle>
-                {showAddIngreso && (
-                  <FormBlock onSave={addIngreso} onCancel={() => setShowAddIngreso(false)}>
-                    <input value={newIngreso.name} onChange={e => setNewIngreso({ ...newIngreso, name: e.target.value })} placeholder="Ej: Comisión C21, Honorarios..." style={inp()} />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
-                      <input className="mono" value={newIngreso.amount} onChange={e => setNewIngreso({ ...newIngreso, amount: e.target.value })} placeholder="€" style={inp({ color: T.green, fontWeight: 700 })} />
-                      <input type="number" value={newIngreso.dayOfMonth} min="1" max="31" onChange={e => setNewIngreso({ ...newIngreso, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día cobro" style={inp()} />
+    // ─── MAIN ───
+    function App() {
+      const [tab, setTab] = useState("resumen");
+      const [calDate, setCalDate] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
+      const [selDay, setSelDay] = useState(null);
+      const [ready, setReady] = useState(false);
+      const [saved, setSaved] = useState(false);
+      const [showReset, setShowReset] = useState(false);
+
+      const [ingresos, setIngresos] = useState([]);
+      const [alquileres, setAlquileres] = useState([]);
+      const [gastosF, setGastosF] = useState(PRESET_GASTOS.map(p => ({ ...p, enabled: false, amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() })));
+      const [gastosExtra, setGastosExtra] = useState([]);
+      const [varItems, setVarItems] = useState([]);
+      const [savingsPct, setSavingsPct] = useState("10");
+      const [weeklyLimit, setWeeklyLimit] = useState("");
+      const [saldo, setSaldo] = useState("");
+
+      const [showAddIngreso, setShowAddIngreso] = useState(false);
+      const [showAddAlquiler, setShowAddAlquiler] = useState(false);
+      const [showAddExtra, setShowAddExtra] = useState(false);
+      const [newVar, setNewVar] = useState({ cat: "gasolina", amount: "", note: "", date: todayStr });
+
+      const blankIng = { name: "", amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() };
+      const blankExt = { name: "", icon: "📌", amount: "", frequency: "mensual", dayOfMonth: 1, irpf: false, irpfNote: "", color: "#64748b" };
+      const [newIngreso, setNewIngreso] = useState({ ...blankIng });
+      const [newAlquiler, setNewAlquiler] = useState({ ...blankIng, name: "Alquiler" });
+      const [newExtra, setNewExtra] = useState({ ...blankExt });
+
+      // ── LOAD ──
+      useEffect(() => {
+        loadData().then(d => {
+          if (d) {
+            if (d.ingresos) setIngresos(d.ingresos);
+            if (d.alquileres) setAlquileres(d.alquileres);
+            if (d.gastosF) setGastosF(d.gastosF);
+            if (d.gastosExtra) setGastosExtra(d.gastosExtra);
+            if (d.varItems) setVarItems(d.varItems);
+            if (d.savingsPct) setSavingsPct(d.savingsPct);
+            if (d.weeklyLimit) setWeeklyLimit(d.weeklyLimit);
+            if (d.saldo !== undefined) setSaldo(d.saldo);
+          }
+          setReady(true);
+        });
+      }, []);
+
+      // ── SAVE ──
+      const persist = useCallback((patch = {}) => {
+        const d = { ingresos, alquileres, gastosF, gastosExtra, varItems, savingsPct, weeklyLimit, saldo, ...patch };
+        saveData(d).then(() => { setSaved(true); setTimeout(() => setSaved(false), 1500); });
+      }, [ingresos, alquileres, gastosF, gastosExtra, varItems, savingsPct, weeklyLimit, saldo]);
+
+      // ── RESET ──
+      const doReset = async () => {
+        const fresh = PRESET_GASTOS.map(p => ({ ...p, enabled: false, amount: "", frequency: "mensual", dayOfMonth: 1, startMonth: today.getMonth(), startYear: today.getFullYear() }));
+        setIngresos([]); setAlquileres([]); setGastosF(fresh); setGastosExtra([]);
+        setVarItems([]); setSavingsPct("10"); setWeeklyLimit(""); setSaldo("");
+        await saveData({ ingresos: [], alquileres: [], gastosF: fresh, gastosExtra: [], varItems: [], savingsPct: "10", weeklyLimit: "", saldo: "" });
+        setShowReset(false); setSaved(true); setTimeout(() => setSaved(false), 1500);
+      };
+
+      // ── COMPUTED ──
+      const calYear = calDate.getFullYear();
+      const calMonth = calDate.getMonth();
+
+      const totalIngresos = ingresos.reduce((s, i) => s + monthlyEquiv(i), 0);
+      const totalAlquiler = alquileres.reduce((s, a) => s + monthlyEquiv(a), 0);
+      const totalIncome = totalIngresos + totalAlquiler;
+      const activeF = gastosF.filter(g => g.enabled);
+      const totalFixed = [...activeF, ...gastosExtra].reduce((s, g) => s + monthlyEquiv(g), 0);
+      const autoSave = totalIncome * (parseFloat(savingsPct) || 0) / 100;
+      const varBudget = totalIncome - totalFixed - autoSave;
+      const weeklyCalc = weeklyLimit ? parseFloat(weeklyLimit) : Math.max(0, varBudget / 4.3);
+
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const thisMonthVar = varItems.filter(e => { const d = new Date(e.date); return d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear(); });
+      const spentMonth = thisMonthVar.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+      const weekEntries = varItems.filter(e => new Date(e.date) >= startOfWeek);
+      const spentWeek = weekEntries.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+      const weekLeft = weeklyCalc - spentWeek;
+
+      // Calendar
+      const calOffset = ((new Date(calYear, calMonth, 1).getDay() || 7) - 1);
+      const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+      const allFDue = [...activeF, ...gastosExtra].filter(g => isDue(g, calYear, calMonth));
+      const allIDue = [...ingresos, ...alquileres].filter(i => isDue(i, calYear, calMonth));
+      const getDayF = d => allFDue.filter(g => parseInt(g.dayOfMonth) === d);
+      const getDayI = d => allIDue.filter(i => parseInt(i.dayOfMonth) === d);
+
+      const irpfItems = [...activeF, ...gastosExtra].filter(g => g.irpf).map(g => ({ name: g.name, monthly: monthlyEquiv(g), note: g.irpfNote }));
+      const irpfTotal = irpfItems.reduce((s, i) => s + i.monthly, 0);
+
+      // ── CRUD ──
+      const addIngreso = () => { if (!newIngreso.amount) return; const u = [...ingresos, { ...newIngreso, id: uid(), name: newIngreso.name || "Ingreso" }]; setIngresos(u); persist({ ingresos: u }); setNewIngreso({ ...blankIng }); setShowAddIngreso(false); };
+      const delIngreso = id => { const u = ingresos.filter(i => i.id !== id); setIngresos(u); persist({ ingresos: u }); };
+      const editIngreso = (id, f, v) => setIngresos(prev => prev.map(i => i.id === id ? { ...i, [f]: v } : i));
+      const blurIngreso = () => setIngresos(prev => { persist({ ingresos: prev }); return prev; });
+      const addAlquiler = () => { if (!newAlquiler.amount) return; const u = [...alquileres, { ...newAlquiler, id: uid(), name: newAlquiler.name || "Alquiler" }]; setAlquileres(u); persist({ alquileres: u }); setNewAlquiler({ ...blankIng, name: "Alquiler" }); setShowAddAlquiler(false); };
+      const delAlquiler = id => { const u = alquileres.filter(a => a.id !== id); setAlquileres(u); persist({ alquileres: u }); };
+      const editAlquiler = (id, f, v) => setAlquileres(prev => prev.map(a => a.id === id ? { ...a, [f]: v } : a));
+      const blurAlquiler = () => setAlquileres(prev => { persist({ alquileres: prev }); return prev; });
+      const toggleGasto = id => { const u = gastosF.map(g => g.id === id ? { ...g, enabled: !g.enabled } : g); setGastosF(u); persist({ gastosF: u }); };
+      const editGasto = (id, f, v) => { const u = gastosF.map(g => g.id === id ? { ...g, [f]: v } : g); setGastosF(u); persist({ gastosF: u }); };
+      const addExtra = () => { if (!newExtra.name || !newExtra.amount) return; const u = [...gastosExtra, { ...newExtra, id: uid() }]; setGastosExtra(u); persist({ gastosExtra: u }); setNewExtra({ ...blankExt }); setShowAddExtra(false); };
+      const delExtra = id => { const u = gastosExtra.filter(g => g.id !== id); setGastosExtra(u); persist({ gastosExtra: u }); };
+      const editExtra = (id, f, v) => setGastosExtra(prev => prev.map(g => g.id === id ? { ...g, [f]: v } : g));
+      const blurExtra = () => setGastosExtra(prev => { persist({ gastosExtra: prev }); return prev; });
+      const addVar = () => { if (!newVar.amount) return; const u = [...varItems, { ...newVar, id: uid(), amount: parseFloat(newVar.amount) }]; setVarItems(u); persist({ varItems: u }); setNewVar({ cat: "gasolina", amount: "", note: "", date: todayStr }); };
+      const delVar = id => { const u = varItems.filter(e => e.id !== id); setVarItems(u); persist({ varItems: u }); };
+
+      if (!ready) return <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", background: T.bg, color: T.muted, fontFamily: "'DM Sans',sans-serif" }}>Cargando...</div>;
+
+      return (
+        <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'DM Sans',sans-serif" }}>
+          <style>{css}</style>
+          {showReset && <ResetModal onConfirm={doReset} onCancel={() => setShowReset(false)} />}
+
+          {/* TOP BAR */}
+          <div className="top-bar">
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span style={{ fontSize: "16px", fontWeight: 700, letterSpacing: "-.3px" }}>Control Hogar</span>
+              <span style={{ background: `${T.gold}18`, border: `1px solid ${T.gold}44`, color: T.gold, borderRadius: "4px", padding: "1px 7px", fontSize: "10px", fontWeight: 700 }}>Autónomo</span>
+              {saved && <span className="fade-in" style={{ fontSize: "11px", color: T.green }}>✓ Guardado</span>}
+            </div>
+
+            <div style={{ display: "flex", gap: "4px" }}>
+              {[["resumen", "📊 Resumen"], ["variables", "💳 Variables"], ["irpf", "📋 IRPF"]].map(([k, l]) => (
+                <button key={k} onClick={() => setTab(k)} style={{ background: tab === k ? "#0d1930" : "transparent", border: `1px solid ${tab === k ? T.border2 : "transparent"}`, color: tab === k ? T.text : T.muted, borderRadius: "7px", padding: "6px 13px", fontSize: "12px", fontWeight: 600 }}>
+                  {l}
+                </button>
+              ))}
+            </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <span className="mono" style={{ fontSize: "11px", color: T.muted }}>{today.getDate()} {MONTHS[today.getMonth()].slice(0, 3)} {today.getFullYear()}</span>
+              <button onClick={() => setShowReset(true)} style={{ background: `${T.red}15`, border: `1px solid ${T.red}44`, color: T.red, borderRadius: "6px", padding: "5px 11px", fontSize: "11px", fontWeight: 700 }}>
+                ↺ Reset
+              </button>
+            </div>
+          </div>
+
+          <div style={{ padding: "14px 18px" }}>
+
+            {/* KPIs */}
+            <div className="grid-kpi">
+              {[
+                { label: "Ingresos + Alquiler", val: totalIncome, color: T.green, note: "€/mes estimado" },
+                { label: "Gastos fijos / mes", val: totalFixed, color: T.gold, note: "€ equiv. mensual" },
+                { label: "Ahorro automático", val: autoSave, color: T.blue, note: `${savingsPct}% al cobrar` },
+                { label: "Variable disponible", val: varBudget, color: varBudget < 0 ? T.red : T.purple, note: "€/mes para vivir" },
+                { label: "Gasto esta semana", val: spentWeek, color: weekLeft < 0 ? T.red : "#94a3b8", note: `quedan ${Math.max(0, weekLeft).toFixed(0)} € / ${weeklyCalc.toFixed(0)} €` },
+              ].map((k, i) => (
+                <div key={i} style={card()}>
+                  <p style={{ fontSize: "9px", color: T.muted, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "6px" }}>{k.label}</p>
+                  <p className="mono" style={{ fontSize: "20px", fontWeight: 700, color: k.color }}>{parseFloat(k.val || 0).toFixed(0)}</p>
+                  <p style={{ fontSize: "9px", color: T.muted, marginTop: "3px" }}>{k.note}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* SALDO */}
+            <SaldoWidget saldo={saldo} setSaldo={setSaldo} totalIncome={totalIncome} totalFixed={totalFixed} spentVar={spentMonth} autoSave={autoSave} onSave={() => persist({ saldo })} />
+
+            {/* ══ RESUMEN ══ */}
+            {tab === "resumen" && (
+              <div className="grid-main">
+
+                {/* COL 1: INGRESOS */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+
+                  {/* Ingresos */}
+                  <div style={card()}>
+                    <STitle action={<AddBtn open={showAddIngreso} onClick={() => { setShowAddIngreso(!showAddIngreso); setNewIngreso({ ...blankIng }); }} />}>💵 Ingresos</STitle>
+                    {showAddIngreso && (
+                      <FormBlock onSave={addIngreso} onCancel={() => setShowAddIngreso(false)}>
+                        <input value={newIngreso.name} onChange={e => setNewIngreso({ ...newIngreso, name: e.target.value })} placeholder="Ej: Comisión C21, Honorarios..." style={inp()} />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
+                          <input className="mono" value={newIngreso.amount} onChange={e => setNewIngreso({ ...newIngreso, amount: e.target.value })} placeholder="€" style={inp({ color: T.green, fontWeight: 700 })} />
+                          <input type="number" value={newIngreso.dayOfMonth} min="1" max="31" onChange={e => setNewIngreso({ ...newIngreso, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día cobro" style={inp()} />
+                        </div>
+                        <select value={newIngreso.frequency} onChange={e => setNewIngreso({ ...newIngreso, frequency: e.target.value })} style={inp()}>
+                          {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                        </select>
+                        {newIngreso.frequency !== "mensual" && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
+                          <select value={newIngreso.startMonth} onChange={e => setNewIngreso({ ...newIngreso, startMonth: parseInt(e.target.value) })} style={inp()}>
+                            {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
+                          </select>
+                          <input type="number" value={newIngreso.startYear} onChange={e => setNewIngreso({ ...newIngreso, startYear: parseInt(e.target.value) })} style={inp()} />
+                        </div>}
+                      </FormBlock>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "180px", overflowY: "auto" }}>
+                      {ingresos.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "14px 0" }}>Sin ingresos. Añade lo que esperas cobrar.</p>}
+                      {ingresos.map(inc => (
+                        <div key={inc.id} className="row" style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 5px", borderRadius: "7px" }}>
+                          <div style={{ width: "3px", height: "32px", borderRadius: "2px", background: T.green, flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <MInp value={inc.name} onChange={v => { const u = ingresos.map(i => i.id === inc.id ? { ...i, name: v } : i); setIngresos(u); persist({ ingresos: u }); }} placeholder="Ingreso" />
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
+                              <span style={{ fontSize: "10px", color: T.muted }}>Día {inc.dayOfMonth}</span>
+                              <FSel value={inc.frequency} onChange={v => { editIngreso(inc.id, "frequency", v); blurIngreso(); }} />
+                            </div>
+                          </div>
+                          <MInp mono value={String(inc.amount)} onChange={v => { const u = ingresos.map(i => i.id === inc.id ? { ...i, amount: v } : i); setIngresos(u); persist({ ingresos: u }); }} color={T.green} right style={{ textAlign: "right", fontSize: "14px", width: "70px" }} />
+                          <button onClick={() => delIngreso(inc.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                        </div>
+                      ))}
                     </div>
-                    <select value={newIngreso.frequency} onChange={e => setNewIngreso({ ...newIngreso, frequency: e.target.value })} style={inp()}>
-                      {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                    </select>
-                    {newIngreso.frequency !== "mensual" && <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
-                      <select value={newIngreso.startMonth} onChange={e => setNewIngreso({ ...newIngreso, startMonth: parseInt(e.target.value) })} style={inp()}>
-                        {MONTHS.map((m, i) => <option key={i} value={i}>{m}</option>)}
-                      </select>
-                      <input type="number" value={newIngreso.startYear} onChange={e => setNewIngreso({ ...newIngreso, startYear: parseInt(e.target.value) })} style={inp()} />
+                    {ingresos.length > 0 && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", color: T.muted }}>Subtotal</span>
+                      <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.green }}>{totalIngresos.toFixed(2)} €</span>
                     </div>}
-                  </FormBlock>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "180px", overflowY: "auto" }}>
-                  {ingresos.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "14px 0" }}>Sin ingresos. Añade lo que esperas cobrar.</p>}
-                  {ingresos.map(inc => (
-                    <div key={inc.id} className="row" style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 5px", borderRadius: "7px" }}>
-                      <div style={{ width: "3px", height: "32px", borderRadius: "2px", background: T.green, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <MInp value={inc.name} onChange={v => { const u = ingresos.map(i => i.id === inc.id ? { ...i, name: v } : i); setIngresos(u); persist({ ingresos: u }); }} placeholder="Ingreso" />
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
-                          <span style={{ fontSize: "10px", color: T.muted }}>Día {inc.dayOfMonth}</span>
-                          <FSel value={inc.frequency} onChange={v => { editIngreso(inc.id, "frequency", v); blurIngreso(); }} />
+                  </div>
+
+                  {/* Alquiler */}
+                  <div style={card()}>
+                    <STitle action={<AddBtn open={showAddAlquiler} onClick={() => { setShowAddAlquiler(!showAddAlquiler); setNewAlquiler({ ...blankIng, name: "Alquiler" }); }} />}>🏠 Alquiler</STitle>
+                    {showAddAlquiler && (
+                      <FormBlock onSave={addAlquiler} onCancel={() => setShowAddAlquiler(false)}>
+                        <input value={newAlquiler.name} onChange={e => setNewAlquiler({ ...newAlquiler, name: e.target.value })} placeholder="Ej: Alquiler piso, Local..." style={inp()} />
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
+                          <input className="mono" value={newAlquiler.amount} onChange={e => setNewAlquiler({ ...newAlquiler, amount: e.target.value })} placeholder="€" style={inp({ color: "#06b6d4", fontWeight: 700 })} />
+                          <input type="number" value={newAlquiler.dayOfMonth} min="1" max="31" onChange={e => setNewAlquiler({ ...newAlquiler, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día cobro" style={inp()} />
+                        </div>
+                        <select value={newAlquiler.frequency} onChange={e => setNewAlquiler({ ...newAlquiler, frequency: e.target.value })} style={inp()}>
+                          {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                        </select>
+                      </FormBlock>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "160px", overflowY: "auto" }}>
+                      {alquileres.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "12px 0" }}>Sin alquileres registrados.</p>}
+                      {alquileres.map(alq => (
+                        <div key={alq.id} className="row" style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 5px", borderRadius: "7px" }}>
+                          <div style={{ width: "3px", height: "32px", borderRadius: "2px", background: "#06b6d4", flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <MInp value={alq.name} onChange={v => { const u = alquileres.map(a => a.id === alq.id ? { ...a, name: v } : a); setAlquileres(u); persist({ alquileres: u }); }} placeholder="Alquiler" />
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
+                              <span style={{ fontSize: "10px", color: T.muted }}>Día {alq.dayOfMonth}</span>
+                              <FSel value={alq.frequency} onChange={v => { editAlquiler(alq.id, "frequency", v); blurAlquiler(); }} />
+                            </div>
+                          </div>
+                          <MInp mono value={String(alq.amount)} onChange={v => { const u = alquileres.map(a => a.id === alq.id ? { ...a, amount: v } : a); setAlquileres(u); persist({ alquileres: u }); }} color="#06b6d4" right style={{ textAlign: "right", fontSize: "14px", width: "70px" }} />
+                          <button onClick={() => delAlquiler(alq.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                    {alquileres.length > 0 && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between" }}>
+                      <span style={{ fontSize: "11px", color: T.muted }}>Subtotal</span>
+                      <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: "#06b6d4" }}>{totalAlquiler.toFixed(2)} €</span>
+                    </div>}
+                  </div>
+
+                  {/* Config */}
+                  <div style={card()}>
+                    <STitle>⚙ Ajustes</STitle>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                      <div>
+                        <label style={lbl}>% Ahorro automático</label>
+                        <input className="mono" value={savingsPct} onChange={e => { setSavingsPct(e.target.value); persist({ savingsPct: e.target.value }); }} placeholder="10" style={inp({ color: T.blue, fontWeight: 700 })} />
+                      </div>
+                      <div>
+                        <label style={lbl}>Límite semanal (€)</label>
+                        <input className="mono" value={weeklyLimit} onChange={e => { setWeeklyLimit(e.target.value); persist({ weeklyLimit: e.target.value }); }} placeholder={`${weeklyCalc.toFixed(0)} auto`} style={inp({ color: T.purple, fontWeight: 700 })} />
+                      </div>
+                      {totalIncome > 0 && <div style={{ padding: "9px 10px", background: T.faint, borderRadius: "7px", borderLeft: `3px solid ${T.gold}` }}>
+                        <p style={{ fontSize: "11px", color: T.text, lineHeight: "1.7" }}>
+                          💡 <span className="mono" style={{ color: T.gold, fontWeight: 700 }}>{weeklyCalc.toFixed(0)} €/sem</span> sugerido<br />
+                          💰 Apartar <span className="mono" style={{ color: T.blue, fontWeight: 700 }}>{autoSave.toFixed(0)} €</span> al cobrar
+                        </p>
+                      </div>}
+                    </div>
+                  </div>
+                </div>
+
+                {/* COL 2: GASTOS FIJOS */}
+                <div style={card()}>
+                  <STitle action={<AddBtn open={showAddExtra} onClick={() => { setShowAddExtra(!showAddExtra); setNewExtra({ ...blankExt }); }} />}>📋 Gastos Fijos</STitle>
+
+                  {/* Presets */}
+                  <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "14px" }}>
+                    {gastosF.map(g => (
+                      <div key={g.id} style={{ borderRadius: "9px", border: `1px solid ${g.enabled ? g.color + "44" : T.border}`, background: g.enabled ? `${g.color}08` : "transparent" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 12px" }}>
+                          <button onClick={() => toggleGasto(g.id)} style={{ width: "20px", height: "20px", borderRadius: "5px", flexShrink: 0, border: `1px solid ${g.enabled ? g.color : T.border2}`, background: g.enabled ? g.color : "transparent", color: g.enabled ? "#04080f" : T.muted, fontSize: "11px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            {g.enabled ? "✓" : ""}
+                          </button>
+                          <span style={{ fontSize: "15px", flexShrink: 0 }}>{g.icon}</span>
+                          <span style={{ fontSize: "13px", fontWeight: 600, color: g.enabled ? T.text : T.muted, flex: 1 }}>{g.name}</span>
+                          <IrpfTip irpf={g.irpf} note={g.irpfNote} />
+                          {g.enabled && <>
+                            <input className="mono" value={String(g.amount)} onChange={e => editGasto(g.id, "amount", e.target.value)} placeholder="€"
+                              style={{ background: "transparent", border: `1px solid ${T.border2}`, borderRadius: "6px", padding: "4px 8px", color: T.gold, fontWeight: 700, width: "76px", textAlign: "right", fontSize: "13px" }} />                        <FSel value={g.frequency} onChange={v => editGasto(g.id, "frequency", v)} />
+                            <input type="number" value={g.dayOfMonth} min="1" max="31" onChange={e => editGasto(g.id, "dayOfMonth", parseInt(e.target.value) || 1)}
+                              style={{ background: "transparent", border: `1px solid ${T.border2}`, borderRadius: "6px", padding: "4px 5px", color: T.muted, width: "44px", textAlign: "center", fontSize: "11px" }} placeholder="Día" />
+                            {g.amount && g.frequency !== "mensual" && <span className="mono" style={{ fontSize: "10px", color: T.muted, minWidth: "55px", textAlign: "right" }}>{monthlyEquiv(g).toFixed(0)} €/mes</span>}
+                          </>}
                         </div>
                       </div>
-                      <MInp mono value={String(inc.amount)} onChange={v => { const u = ingresos.map(i => i.id === inc.id ? { ...i, amount: v } : i); setIngresos(u); persist({ ingresos: u }); }} color={T.green} right style={{ textAlign: "right", fontSize: "14px", width: "70px" }} />
-                      <button onClick={() => delIngreso(inc.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-                {ingresos.length > 0 && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "11px", color: T.muted }}>Subtotal</span>
-                  <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.green }}>{totalIngresos.toFixed(2)} €</span>
-                </div>}
-              </div>
+                    ))}
+                  </div>
 
-              {/* Alquiler */}
-              <div style={card()}>
-                <STitle action={<AddBtn open={showAddAlquiler} onClick={() => { setShowAddAlquiler(!showAddAlquiler); setNewAlquiler({ ...blankIng, name: "Alquiler" }); }} />}>🏠 Alquiler</STitle>
-                {showAddAlquiler && (
-                  <FormBlock onSave={addAlquiler} onCancel={() => setShowAddAlquiler(false)}>
-                    <input value={newAlquiler.name} onChange={e => setNewAlquiler({ ...newAlquiler, name: e.target.value })} placeholder="Ej: Alquiler piso, Local..." style={inp()} />
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
-                      <input className="mono" value={newAlquiler.amount} onChange={e => setNewAlquiler({ ...newAlquiler, amount: e.target.value })} placeholder="€" style={inp({ color: "#06b6d4", fontWeight: 700 })} />
-                      <input type="number" value={newAlquiler.dayOfMonth} min="1" max="31" onChange={e => setNewAlquiler({ ...newAlquiler, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día cobro" style={inp()} />
-                    </div>
-                    <select value={newAlquiler.frequency} onChange={e => setNewAlquiler({ ...newAlquiler, frequency: e.target.value })} style={inp()}>
-                      {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                    </select>
-                  </FormBlock>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "160px", overflowY: "auto" }}>
-                  {alquileres.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "12px 0" }}>Sin alquileres registrados.</p>}
-                  {alquileres.map(alq => (
-                    <div key={alq.id} className="row" style={{ display: "flex", alignItems: "center", gap: "7px", padding: "7px 5px", borderRadius: "7px" }}>
-                      <div style={{ width: "3px", height: "32px", borderRadius: "2px", background: "#06b6d4", flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <MInp value={alq.name} onChange={v => { const u = alquileres.map(a => a.id === alq.id ? { ...a, name: v } : a); setAlquileres(u); persist({ alquileres: u }); }} placeholder="Alquiler" />
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
-                          <span style={{ fontSize: "10px", color: T.muted }}>Día {alq.dayOfMonth}</span>
-                          <FSel value={alq.frequency} onChange={v => { editAlquiler(alq.id, "frequency", v); blurAlquiler(); }} />
+                  {/* Custom */}
+                  <div style={{ borderTop: `1px dashed ${T.border2}`, paddingTop: "10px" }}>
+                    <p style={{ fontSize: "10px", color: T.muted, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "8px" }}>Otros recibos</p>
+                    {showAddExtra && (
+                      <FormBlock onSave={addExtra} onCancel={() => setShowAddExtra(false)}>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
+                          <input value={newExtra.name} onChange={e => setNewExtra({ ...newExtra, name: e.target.value })} placeholder="Nombre" style={inp()} />
+                          <input className="mono" value={newExtra.amount} onChange={e => setNewExtra({ ...newExtra, amount: e.target.value })} placeholder="€" style={inp({ color: T.gold, fontWeight: 700 })} />
                         </div>
-                      </div>
-                      <MInp mono value={String(alq.amount)} onChange={v => { const u = alquileres.map(a => a.id === alq.id ? { ...a, amount: v } : a); setAlquileres(u); persist({ alquileres: u }); }} color="#06b6d4" right style={{ textAlign: "right", fontSize: "14px", width: "70px" }} />
-                      <button onClick={() => delAlquiler(alq.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
+                          <select value={newExtra.frequency} onChange={e => setNewExtra({ ...newExtra, frequency: e.target.value })} style={inp()}>
+                            {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+                          </select>
+                          <input type="number" value={newExtra.dayOfMonth} min="1" max="31" onChange={e => setNewExtra({ ...newExtra, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día" style={inp()} />
+                          <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: T.muted, cursor: "pointer" }}>
+                            <input type="checkbox" checked={newExtra.irpf} onChange={e => setNewExtra({ ...newExtra, irpf: e.target.checked })} />
+                            IRPF deducible
+                          </label>
+                        </div>
+                        {newExtra.irpf && <input value={newExtra.irpfNote} onChange={e => setNewExtra({ ...newExtra, irpfNote: e.target.value })} placeholder="Nota IRPF" style={inp()} />}
+                      </FormBlock>
+                    )}
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {gastosExtra.length === 0 && <p style={{ color: T.muted, fontSize: "11px", textAlign: "center", padding: "8px 0" }}>Sin recibos adicionales.</p>}
+                      {gastosExtra.map(g => (
+                        <div key={g.id} className="row" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 6px", borderRadius: "7px" }}>
+                          <div style={{ width: "3px", height: "30px", borderRadius: "2px", background: T.gold, flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <MInp value={g.name} onChange={v => { const u = gastosExtra.map(x => x.id === g.id ? { ...x, name: v } : x); setGastosExtra(u); persist({ gastosExtra: u }); }} placeholder="Recibo" />
+                            <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
+                              <span style={{ fontSize: "10px", color: T.muted }}>Día {g.dayOfMonth}</span>
+                              <FSel value={g.frequency} onChange={v => { editExtra(g.id, "frequency", v); blurExtra(); }} />
+                              {g.irpf && <IrpfTip irpf note={g.irpfNote || "Deducible"} />}
+                            </div>
+                          </div>
+                          <MInp mono value={String(g.amount)} onChange={v => { const u = gastosExtra.map(x => x.id === g.id ? { ...x, amount: v } : x); setGastosExtra(u); persist({ gastosExtra: u }); }} color={T.gold} right style={{ textAlign: "right", fontSize: "13px", width: "70px" }} />
+                          <button onClick={() => delExtra(g.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-                {alquileres.length > 0 && <div style={{ marginTop: "8px", paddingTop: "8px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between" }}>
-                  <span style={{ fontSize: "11px", color: T.muted }}>Subtotal</span>
-                  <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: "#06b6d4" }}>{totalAlquiler.toFixed(2)} €</span>
-                </div>}
-              </div>
+                  </div>
 
-              {/* Config */}
-              <div style={card()}>
-                <STitle>⚙ Ajustes</STitle>
-                <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                  <div>
-                    <label style={lbl}>% Ahorro automático</label>
-                    <input className="mono" value={savingsPct} onChange={e => { setSavingsPct(e.target.value); persist({ savingsPct: e.target.value }); }} placeholder="10" style={inp({ color: T.blue, fontWeight: 700 })} />
-                  </div>
-                  <div>
-                    <label style={lbl}>Límite semanal (€)</label>
-                    <input className="mono" value={weeklyLimit} onChange={e => { setWeeklyLimit(e.target.value); persist({ weeklyLimit: e.target.value }); }} placeholder={`${weeklyCalc.toFixed(0)} auto`} style={inp({ color: T.purple, fontWeight: 700 })} />
-                  </div>
-                  {totalIncome > 0 && <div style={{ padding: "9px 10px", background: T.faint, borderRadius: "7px", borderLeft: `3px solid ${T.gold}` }}>
-                    <p style={{ fontSize: "11px", color: T.text, lineHeight: "1.7" }}>
-                      💡 <span className="mono" style={{ color: T.gold, fontWeight: 700 }}>{weeklyCalc.toFixed(0)} €/sem</span> sugerido<br />
-                      💰 Apartar <span className="mono" style={{ color: T.blue, fontWeight: 700 }}>{autoSave.toFixed(0)} €</span> al cobrar
-                    </p>
+                  {(activeF.length > 0 || gastosExtra.length > 0) && <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontSize: "11px", color: T.muted }}>Total fijos mensual equiv.</span>
+                    <span className="mono" style={{ fontSize: "18px", fontWeight: 800, color: T.gold }}>{totalFixed.toFixed(2)} €</span>
                   </div>}
                 </div>
+
+                {/* COL 3: CALENDARIO */}
+                <div style={{ ...card(), display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                    <button onClick={() => setCalDate(new Date(calYear, calMonth - 1, 1))} style={{ background: T.faint, border: `1px solid ${T.border}`, color: T.muted, borderRadius: "6px", padding: "4px 9px", fontSize: "14px" }}>‹</button>
+                    <div style={{ textAlign: "center" }}>
+                      <p style={{ fontSize: "13px", fontWeight: 700 }}>{MONTHS[calMonth].slice(0, 3)} {calYear}</p>
+                      <p style={{ fontSize: "10px", color: T.muted, marginTop: "1px" }}><span className="mono" style={{ color: T.gold }}>{allFDue.reduce((s, g) => s + parseFloat(g.amount || 0), 0).toFixed(0)} €</span> en recibos</p>
+                    </div>
+                    <button onClick={() => setCalDate(new Date(calYear, calMonth + 1, 1))} style={{ background: T.faint, border: `1px solid ${T.border}`, color: T.muted, borderRadius: "6px", padding: "4px 9px", fontSize: "14px" }}>›</button>
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px" }}>
+                    {["L", "M", "X", "J", "V", "S", "D"].map(d => <p key={d} style={{ textAlign: "center", fontSize: "9px", color: T.muted, fontWeight: 700, padding: "3px 0" }}>{d}</p>)}
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "3px" }}>
+                    {Array.from({ length: calOffset }).map((_, i) => <div key={`e${i}`} />)}
+                    {Array.from({ length: daysInMonth }).map((_, i) => {
+                      const day = i + 1, db = getDayF(day), di = getDayI(day);
+                      const isToday = today.getDate() === day && today.getMonth() === calMonth && today.getFullYear() === calYear;
+                      const isSel = selDay === day, hasAny = db.length > 0 || di.length > 0;
+                      return (
+                        <div key={day} className={`cal-day${hasAny ? " active" : ""}`} onClick={() => hasAny && setSelDay(isSel ? null : day)}
+                          style={{
+                            borderRadius: "7px", padding: "5px 2px", textAlign: "center", cursor: hasAny ? "pointer" : "default",
+                            background: isSel ? "#111c32" : isToday ? "#0a1a10" : "transparent",
+                            border: isSel ? `1px solid ${T.blue}` : isToday ? `1px solid ${T.green}44` : `1px solid transparent`, transition: "all .1s"
+                          }}>
+                          <span style={{ fontSize: "11px", fontWeight: isToday || hasAny ? 700 : 400, color: isToday ? T.green : hasAny ? T.text : T.muted, display: "block" }}>{day}</span>
+                          <div style={{ display: "flex", justifyContent: "center", gap: "2px", marginTop: "3px", minHeight: "6px" }}>
+                            {db.slice(0, 2).map((_, bi) => <div key={bi} style={{ width: "5px", height: "5px", borderRadius: "50%", background: T.gold }} />)}
+                            {di.slice(0, 1).map((_, bi) => <div key={"i" + bi} style={{ width: "5px", height: "5px", borderRadius: "50%", background: T.green }} />)}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: T.gold }} /><span style={{ fontSize: "10px", color: T.muted }}>Recibo</span></div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: T.green }} /><span style={{ fontSize: "10px", color: T.muted }}>Ingreso</span></div>
+                  </div>
+
+                  {selDay !== null && (
+                    <div className="fade-in" style={{ background: T.faint, borderRadius: "9px", padding: "12px", border: `1px solid ${T.border2}` }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "9px" }}>
+                        <p style={{ fontSize: "12px", fontWeight: 700 }}>📅 {selDay} {MONTHS[calMonth].slice(0, 3)}</p>
+                        <button onClick={() => setSelDay(null)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "13px" }}>✕</button>
+                      </div>
+                      {getDayI(selDay).map(i => (
+                        <div key={i.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 9px", borderRadius: "7px", background: "#10b98112", border: "1px solid #10b98122", marginBottom: "5px", alignItems: "center" }}>
+                          <div><p style={{ fontSize: "12px", fontWeight: 600 }}>{i.name}</p><p style={{ fontSize: "10px", color: T.muted }}>{FREQ.find(f => f.value === i.frequency)?.label}</p></div>
+                          <span className="mono" style={{ color: T.green, fontWeight: 800, fontSize: "14px" }}>+{parseFloat(i.amount).toFixed(0)} €</span>
+                        </div>
+                      ))}
+                      {getDayF(selDay).map(g => (
+                        <div key={g.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 9px", borderRadius: "7px", background: "#f59e0b10", border: "1px solid #f59e0b22", marginBottom: "5px", alignItems: "center" }}>
+                          <div><p style={{ fontSize: "12px", fontWeight: 600 }}>{g.icon} {g.name}</p><p style={{ fontSize: "10px", color: T.muted }}>{FREQ.find(f => f.value === g.frequency)?.label}</p></div>
+                          <span className="mono" style={{ color: T.gold, fontWeight: 800, fontSize: "14px" }}>-{parseFloat(g.amount).toFixed(0)} €</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* COL 2: GASTOS FIJOS */}
-            <div style={card()}>
-              <STitle action={<AddBtn open={showAddExtra} onClick={() => { setShowAddExtra(!showAddExtra); setNewExtra({ ...blankExt }); }} />}>📋 Gastos Fijos</STitle>
-
-              {/* Presets */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "5px", marginBottom: "14px" }}>
-                {gastosF.map(g => (
-                  <div key={g.id} style={{ borderRadius: "9px", border: `1px solid ${g.enabled ? g.color + "44" : T.border}`, background: g.enabled ? `${g.color}08` : "transparent" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "10px", padding: "9px 12px" }}>
-                      <button onClick={() => toggleGasto(g.id)} style={{ width: "20px", height: "20px", borderRadius: "5px", flexShrink: 0, border: `1px solid ${g.enabled ? g.color : T.border2}`, background: g.enabled ? g.color : "transparent", color: g.enabled ? "#04080f" : T.muted, fontSize: "11px", fontWeight: 800, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        {g.enabled ? "✓" : ""}
-                      </button>
-                      <span style={{ fontSize: "15px", flexShrink: 0 }}>{g.icon}</span>
-                      <span style={{ fontSize: "13px", fontWeight: 600, color: g.enabled ? T.text : T.muted, flex: 1 }}>{g.name}</span>
-                      <IrpfTip irpf={g.irpf} note={g.irpfNote} />
-                      {g.enabled && <>
-                        <input className="mono" value={String(g.amount)} onChange={e => editGasto(g.id, "amount", e.target.value)} placeholder="€"
-                          style={{ background: "transparent", border: `1px solid ${T.border2}`, borderRadius: "6px", padding: "4px 8px", color: T.gold, fontWeight: 700, width: "76px", textAlign: "right", fontSize: "13px" }} />                        <FSel value={g.frequency} onChange={v => editGasto(g.id, "frequency", v)} />
-                        <input type="number" value={g.dayOfMonth} min="1" max="31" onChange={e => editGasto(g.id, "dayOfMonth", parseInt(e.target.value) || 1)}
-                          style={{ background: "transparent", border: `1px solid ${T.border2}`, borderRadius: "6px", padding: "4px 5px", color: T.muted, width: "44px", textAlign: "center", fontSize: "11px" }} placeholder="Día" />
-                        {g.amount && g.frequency !== "mensual" && <span className="mono" style={{ fontSize: "10px", color: T.muted, minWidth: "55px", textAlign: "right" }}>{monthlyEquiv(g).toFixed(0)} €/mes</span>}
-                      </>}
+            {/* ══ VARIABLES ══ */}
+            {tab === "variables" && (
+              <div className="grid-vars">
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ ...card(), display: "flex", alignItems: "center", gap: "18px" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontSize: "12px", color: T.muted, fontWeight: 700 }}>Semana actual</span>
+                        <span className="mono" style={{ fontSize: "13px", fontWeight: 700, color: weekLeft < 0 ? T.red : "#94a3b8" }}>{spentWeek.toFixed(0)} / {weeklyCalc.toFixed(0)} €</span>
+                      </div>
+                      <div style={{ background: T.faint, borderRadius: "6px", height: "8px", overflow: "hidden" }}>
+                        <div style={{ height: "100%", borderRadius: "6px", transition: "width .3s", background: weekLeft < 0 ? T.red : (spentWeek / Math.max(1, weeklyCalc)) > 0.8 ? "#f97316" : T.green, width: `${Math.min(100, (spentWeek / Math.max(1, weeklyCalc)) * 100)}%` }} />
+                      </div>
+                      <p style={{ fontSize: "10px", color: weekLeft < 0 ? T.red : T.muted, marginTop: "4px" }}>{weekLeft < 0 ? `⚠ Pasado en ${Math.abs(weekLeft).toFixed(0)} €` : `Quedan ${weekLeft.toFixed(0)} €`}</p>
+                    </div>
+                    <div style={{ textAlign: "right", flexShrink: 0 }}>
+                      <p style={{ fontSize: "10px", color: T.muted }}>Este mes</p>
+                      <p className="mono" style={{ fontSize: "22px", fontWeight: 800, color: T.text }}>{spentMonth.toFixed(0)} €</p>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              {/* Custom */}
-              <div style={{ borderTop: `1px dashed ${T.border2}`, paddingTop: "10px" }}>
-                <p style={{ fontSize: "10px", color: T.muted, textTransform: "uppercase", letterSpacing: ".06em", marginBottom: "8px" }}>Otros recibos</p>
-                {showAddExtra && (
-                  <FormBlock onSave={addExtra} onCancel={() => setShowAddExtra(false)}>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "7px" }}>
-                      <input value={newExtra.name} onChange={e => setNewExtra({ ...newExtra, name: e.target.value })} placeholder="Nombre" style={inp()} />
-                      <input className="mono" value={newExtra.amount} onChange={e => setNewExtra({ ...newExtra, amount: e.target.value })} placeholder="€" style={inp({ color: T.gold, fontWeight: 700 })} />
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px" }}>
+                    {VAR_CATS.map(cat => {
+                      const total = thisMonthVar.filter(e => e.cat === cat.key).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+                      return (
+                        <div key={cat.key} style={card()}>
+                          <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
+                            <span style={{ fontSize: "17px" }}>{cat.icon}</span>
+                            <span style={{ fontSize: "11px", color: T.muted, fontWeight: 600 }}>{cat.label}</span>
+                          </div>
+                          <p className="mono" style={{ fontSize: "18px", fontWeight: 800, color: total > 0 ? cat.color : T.muted }}>{total.toFixed(0)} €</p>
+                          {cat.irpf && total > 0 && <span style={{ display: "inline-block", background: `${T.green}18`, border: `1px solid ${T.green}44`, color: T.green, borderRadius: "4px", padding: "1px 5px", fontSize: "9px", fontWeight: 700, marginTop: "3px" }}>✓ IRPF</span>}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div style={card()}>
+                    <STitle>📝 Movimientos</STitle>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "380px", overflowY: "auto" }}>
+                      {varItems.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "28px 0" }}>Sin gastos registrados.</p>}
+                      {[...varItems].sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => {
+                        const cat = VAR_CATS.find(c => c.key === e.cat);
+                        return (
+                          <div key={e.id} className="row" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 6px", borderRadius: "8px" }}>
+                            <span style={{ fontSize: "17px", flexShrink: 0 }}>{cat?.icon || "📦"}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <p style={{ fontSize: "13px", fontWeight: 500, color: "#94a3b8" }}>{e.note || cat?.label}</p>
+                              <p style={{ fontSize: "10px", color: T.muted }}>{new Date(e.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} · <span style={{ color: cat?.color }}>{cat?.label}</span></p>
+                            </div>
+                            <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.text }}>{parseFloat(e.amount).toFixed(2)} €</span>
+                            <button onClick={() => delVar(e.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                          </div>
+                        );
+                      })}
                     </div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "7px" }}>
-                      <select value={newExtra.frequency} onChange={e => setNewExtra({ ...newExtra, frequency: e.target.value })} style={inp()}>
-                        {FREQ.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
-                      </select>
-                      <input type="number" value={newExtra.dayOfMonth} min="1" max="31" onChange={e => setNewExtra({ ...newExtra, dayOfMonth: parseInt(e.target.value) || 1 })} placeholder="Día" style={inp()} />
-                      <label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", color: T.muted, cursor: "pointer" }}>
-                        <input type="checkbox" checked={newExtra.irpf} onChange={e => setNewExtra({ ...newExtra, irpf: e.target.checked })} />
-                        IRPF deducible
-                      </label>
+                  </div>
+                </div>
+
+                <div style={card()}>
+                  <STitle>➕ Apuntar gasto</STitle>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    <div>
+                      <label style={lbl}>Categoría</label>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
+                        {VAR_CATS.map(cat => (
+                          <button key={cat.key} onClick={() => setNewVar({ ...newVar, cat: cat.key })} style={{ background: newVar.cat === cat.key ? `${cat.color}22` : T.faint, border: `1px solid ${newVar.cat === cat.key ? cat.color : T.border}`, borderRadius: "8px", padding: "7px 5px", color: newVar.cat === cat.key ? cat.color : T.muted, fontSize: "11px", fontWeight: 700, display: "flex", alignItems: "center", gap: "5px" }}>
+                            <span>{cat.icon}</span><span>{cat.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                    {newExtra.irpf && <input value={newExtra.irpfNote} onChange={e => setNewExtra({ ...newExtra, irpfNote: e.target.value })} placeholder="Nota IRPF" style={inp()} />}
-                  </FormBlock>
-                )}
-                <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                  {gastosExtra.length === 0 && <p style={{ color: T.muted, fontSize: "11px", textAlign: "center", padding: "8px 0" }}>Sin recibos adicionales.</p>}
-                  {gastosExtra.map(g => (
-                    <div key={g.id} className="row" style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 6px", borderRadius: "7px" }}>
-                      <div style={{ width: "3px", height: "30px", borderRadius: "2px", background: T.gold, flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        <MInp value={g.name} onChange={v => { const u = gastosExtra.map(x => x.id === g.id ? { ...x, name: v } : x); setGastosExtra(u); persist({ gastosExtra: u }); }} placeholder="Recibo" />
-                        <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "1px" }}>
-                          <span style={{ fontSize: "10px", color: T.muted }}>Día {g.dayOfMonth}</span>
-                          <FSel value={g.frequency} onChange={v => { editExtra(g.id, "frequency", v); blurExtra(); }} />
-                          {g.irpf && <IrpfTip irpf note={g.irpfNote || "Deducible"} />}
+                    <div>
+                      <label style={lbl}>Importe (€)</label>
+                      <input className="mono" value={newVar.amount} onChange={e => setNewVar({ ...newVar, amount: e.target.value })} placeholder="0,00" style={inp({ color: T.gold, fontWeight: 800, fontSize: "22px", textAlign: "center" })} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Nota</label>
+                      <input value={newVar.note} onChange={e => setNewVar({ ...newVar, note: e.target.value })} placeholder="Ej: BP autovía, Cena cliente..." style={inp()} />
+                    </div>
+                    <div>
+                      <label style={lbl}>Fecha</label>
+                      <input type="date" value={newVar.date} onChange={e => setNewVar({ ...newVar, date: e.target.value })} style={inp()} />
+                    </div>
+                    <button onClick={addVar} style={{ background: T.gold, border: "none", borderRadius: "9px", padding: "12px", color: "#04080f", fontWeight: 800, fontSize: "14px" }}>✓ Registrar gasto</button>
+                    {weekEntries.length > 0 && (
+                      <div style={{ padding: "10px", background: T.faint, borderRadius: "8px", border: `1px solid ${T.border}` }}>
+                        <p style={{ fontSize: "10px", color: T.muted, marginBottom: "7px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Esta semana</p>
+                        {[...weekEntries].slice(-5).reverse().map(e => {
+                          const cat = VAR_CATS.find(c => c.key === e.cat);
+                          return <div key={e.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
+                            <span style={{ fontSize: "11px", color: T.muted }}>{cat?.icon} {e.note || cat?.label}</span>
+                            <span className="mono" style={{ fontSize: "11px", color: "#94a3b8" }}>{parseFloat(e.amount).toFixed(0)} €</span>
+                          </div>;
+                        })}
+                        <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: "6px", marginTop: "5px", display: "flex", justifyContent: "space-between" }}>
+                          <span style={{ fontSize: "12px", color: T.muted, fontWeight: 700 }}>Total</span>
+                          <span className="mono" style={{ fontSize: "13px", fontWeight: 800, color: weekLeft < 0 ? T.red : T.green }}>{spentWeek.toFixed(0)} / {weeklyCalc.toFixed(0)} €</span>
                         </div>
                       </div>
-                      <MInp mono value={String(g.amount)} onChange={v => { const u = gastosExtra.map(x => x.id === g.id ? { ...x, amount: v } : x); setGastosExtra(u); persist({ gastosExtra: u }); }} color={T.gold} right style={{ textAlign: "right", fontSize: "13px", width: "70px" }} />
-                      <button onClick={() => delExtra(g.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {(activeF.length > 0 || gastosExtra.length > 0) && <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${T.border}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ fontSize: "11px", color: T.muted }}>Total fijos mensual equiv.</span>
-                <span className="mono" style={{ fontSize: "18px", fontWeight: 800, color: T.gold }}>{totalFixed.toFixed(2)} €</span>
-              </div>}
-            </div>
-
-            {/* COL 3: CALENDARIO */}
-            <div style={{ ...card(), display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <button onClick={() => setCalDate(new Date(calYear, calMonth - 1, 1))} style={{ background: T.faint, border: `1px solid ${T.border}`, color: T.muted, borderRadius: "6px", padding: "4px 9px", fontSize: "14px" }}>‹</button>
-                <div style={{ textAlign: "center" }}>
-                  <p style={{ fontSize: "13px", fontWeight: 700 }}>{MONTHS[calMonth].slice(0, 3)} {calYear}</p>
-                  <p style={{ fontSize: "10px", color: T.muted, marginTop: "1px" }}><span className="mono" style={{ color: T.gold }}>{allFDue.reduce((s, g) => s + parseFloat(g.amount || 0), 0).toFixed(0)} €</span> en recibos</p>
-                </div>
-                <button onClick={() => setCalDate(new Date(calYear, calMonth + 1, 1))} style={{ background: T.faint, border: `1px solid ${T.border}`, color: T.muted, borderRadius: "6px", padding: "4px 9px", fontSize: "14px" }}>›</button>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "2px" }}>
-                {["L", "M", "X", "J", "V", "S", "D"].map(d => <p key={d} style={{ textAlign: "center", fontSize: "9px", color: T.muted, fontWeight: 700, padding: "3px 0" }}>{d}</p>)}
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", gap: "3px" }}>
-                {Array.from({ length: calOffset }).map((_, i) => <div key={`e${i}`} />)}
-                {Array.from({ length: daysInMonth }).map((_, i) => {
-                  const day = i + 1, db = getDayF(day), di = getDayI(day);
-                  const isToday = today.getDate() === day && today.getMonth() === calMonth && today.getFullYear() === calYear;
-                  const isSel = selDay === day, hasAny = db.length > 0 || di.length > 0;
-                  return (
-                    <div key={day} className={`cal-day${hasAny ? " active" : ""}`} onClick={() => hasAny && setSelDay(isSel ? null : day)}
-                      style={{
-                        borderRadius: "7px", padding: "5px 2px", textAlign: "center", cursor: hasAny ? "pointer" : "default",
-                        background: isSel ? "#111c32" : isToday ? "#0a1a10" : "transparent",
-                        border: isSel ? `1px solid ${T.blue}` : isToday ? `1px solid ${T.green}44` : `1px solid transparent`, transition: "all .1s"
-                      }}>
-                      <span style={{ fontSize: "11px", fontWeight: isToday || hasAny ? 700 : 400, color: isToday ? T.green : hasAny ? T.text : T.muted, display: "block" }}>{day}</span>
-                      <div style={{ display: "flex", justifyContent: "center", gap: "2px", marginTop: "3px", minHeight: "6px" }}>
-                        {db.slice(0, 2).map((_, bi) => <div key={bi} style={{ width: "5px", height: "5px", borderRadius: "50%", background: T.gold }} />)}
-                        {di.slice(0, 1).map((_, bi) => <div key={"i" + bi} style={{ width: "5px", height: "5px", borderRadius: "50%", background: T.green }} />)}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <div style={{ display: "flex", gap: "12px", justifyContent: "center" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: T.gold }} /><span style={{ fontSize: "10px", color: T.muted }}>Recibo</span></div>
-                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}><div style={{ width: "7px", height: "7px", borderRadius: "50%", background: T.green }} /><span style={{ fontSize: "10px", color: T.muted }}>Ingreso</span></div>
-              </div>
-
-              {selDay !== null && (
-                <div className="fade-in" style={{ background: T.faint, borderRadius: "9px", padding: "12px", border: `1px solid ${T.border2}` }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "9px" }}>
-                    <p style={{ fontSize: "12px", fontWeight: 700 }}>📅 {selDay} {MONTHS[calMonth].slice(0, 3)}</p>
-                    <button onClick={() => setSelDay(null)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "13px" }}>✕</button>
+                    )}
                   </div>
-                  {getDayI(selDay).map(i => (
-                    <div key={i.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 9px", borderRadius: "7px", background: "#10b98112", border: "1px solid #10b98122", marginBottom: "5px", alignItems: "center" }}>
-                      <div><p style={{ fontSize: "12px", fontWeight: 600 }}>{i.name}</p><p style={{ fontSize: "10px", color: T.muted }}>{FREQ.find(f => f.value === i.frequency)?.label}</p></div>
-                      <span className="mono" style={{ color: T.green, fontWeight: 800, fontSize: "14px" }}>+{parseFloat(i.amount).toFixed(0)} €</span>
-                    </div>
-                  ))}
-                  {getDayF(selDay).map(g => (
-                    <div key={g.id} style={{ display: "flex", justifyContent: "space-between", padding: "7px 9px", borderRadius: "7px", background: "#f59e0b10", border: "1px solid #f59e0b22", marginBottom: "5px", alignItems: "center" }}>
-                      <div><p style={{ fontSize: "12px", fontWeight: 600 }}>{g.icon} {g.name}</p><p style={{ fontSize: "10px", color: T.muted }}>{FREQ.find(f => f.value === g.frequency)?.label}</p></div>
-                      <span className="mono" style={{ color: T.gold, fontWeight: 800, fontSize: "14px" }}>-{parseFloat(g.amount).toFixed(0)} €</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ══ VARIABLES ══ */}
-        {tab === "variables" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 300px", gap: "12px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-              <div style={{ ...card(), display: "flex", alignItems: "center", gap: "18px" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
-                    <span style={{ fontSize: "12px", color: T.muted, fontWeight: 700 }}>Semana actual</span>
-                    <span className="mono" style={{ fontSize: "13px", fontWeight: 700, color: weekLeft < 0 ? T.red : "#94a3b8" }}>{spentWeek.toFixed(0)} / {weeklyCalc.toFixed(0)} €</span>
-                  </div>
-                  <div style={{ background: T.faint, borderRadius: "6px", height: "8px", overflow: "hidden" }}>
-                    <div style={{ height: "100%", borderRadius: "6px", transition: "width .3s", background: weekLeft < 0 ? T.red : (spentWeek / Math.max(1, weeklyCalc)) > 0.8 ? "#f97316" : T.green, width: `${Math.min(100, (spentWeek / Math.max(1, weeklyCalc)) * 100)}%` }} />
-                  </div>
-                  <p style={{ fontSize: "10px", color: weekLeft < 0 ? T.red : T.muted, marginTop: "4px" }}>{weekLeft < 0 ? `⚠ Pasado en ${Math.abs(weekLeft).toFixed(0)} €` : `Quedan ${weekLeft.toFixed(0)} €`}</p>
-                </div>
-                <div style={{ textAlign: "right", flexShrink: 0 }}>
-                  <p style={{ fontSize: "10px", color: T.muted }}>Este mes</p>
-                  <p className="mono" style={{ fontSize: "22px", fontWeight: 800, color: T.text }}>{spentMonth.toFixed(0)} €</p>
                 </div>
               </div>
+            )}
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px" }}>
-                {VAR_CATS.map(cat => {
-                  const total = thisMonthVar.filter(e => e.cat === cat.key).reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-                  return (
-                    <div key={cat.key} style={card()}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "7px", marginBottom: "6px" }}>
-                        <span style={{ fontSize: "17px" }}>{cat.icon}</span>
-                        <span style={{ fontSize: "11px", color: T.muted, fontWeight: 600 }}>{cat.label}</span>
-                      </div>
-                      <p className="mono" style={{ fontSize: "18px", fontWeight: 800, color: total > 0 ? cat.color : T.muted }}>{total.toFixed(0)} €</p>
-                      {cat.irpf && total > 0 && <span style={{ display: "inline-block", background: `${T.green}18`, border: `1px solid ${T.green}44`, color: T.green, borderRadius: "4px", padding: "1px 5px", fontSize: "9px", fontWeight: 700, marginTop: "3px" }}>✓ IRPF</span>}
+            {/* ══ IRPF ══ */}
+            {tab === "irpf" && (
+              <div className="grid-irpf">
+                <div style={card()}>
+                  <STitle>📋 Gastos fijos deducibles (activos)</STitle>
+                  {irpfItems.length === 0 ? (
+                    <div style={{ padding: "24px", textAlign: "center" }}>
+                      <p style={{ color: T.muted, fontSize: "13px" }}>No hay gastos fijos marcados como deducibles activos.</p>
+                      <p style={{ color: T.muted, fontSize: "11px", marginTop: "6px" }}>Actívalos en Resumen → Gastos Fijos.</p>
                     </div>
-                  );
-                })}
-              </div>
-
-              <div style={card()}>
-                <STitle>📝 Movimientos</STitle>
-                <div style={{ display: "flex", flexDirection: "column", gap: "3px", maxHeight: "380px", overflowY: "auto" }}>
-                  {varItems.length === 0 && <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "28px 0" }}>Sin gastos registrados.</p>}
-                  {[...varItems].sort((a, b) => new Date(b.date) - new Date(a.date)).map(e => {
-                    const cat = VAR_CATS.find(c => c.key === e.cat);
-                    return (
-                      <div key={e.id} className="row" style={{ display: "flex", alignItems: "center", gap: "10px", padding: "8px 6px", borderRadius: "8px" }}>
-                        <span style={{ fontSize: "17px", flexShrink: 0 }}>{cat?.icon || "📦"}</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontSize: "13px", fontWeight: 500, color: "#94a3b8" }}>{e.note || cat?.label}</p>
-                          <p style={{ fontSize: "10px", color: T.muted }}>{new Date(e.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })} · <span style={{ color: cat?.color }}>{cat?.label}</span></p>
+                  ) : (
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {irpfItems.map((item, i) => (
+                        <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 12px", borderRadius: "8px", background: T.faint, border: `1px solid ${T.border2}` }}>
+                          <div style={{ flex: 1 }}>
+                            <p style={{ fontSize: "13px", fontWeight: 600 }}>{item.name}</p>
+                            <p style={{ fontSize: "11px", color: T.muted, marginTop: "2px", lineHeight: "1.4" }}>{item.note}</p>
+                          </div>
+                          <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "12px" }}>
+                            <p className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.green }}>{item.monthly.toFixed(0)} €</p>
+                            <p style={{ fontSize: "9px", color: T.muted }}>mensual</p>
+                          </div>
                         </div>
-                        <span className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.text }}>{parseFloat(e.amount).toFixed(2)} €</span>
-                        <button onClick={() => delVar(e.id)} style={{ background: "transparent", border: "none", color: T.muted, fontSize: "11px" }}>✕</button>
+                      ))}
+                      <div style={{ marginTop: "6px", padding: "12px", borderRadius: "8px", background: `${T.green}12`, border: `1px solid ${T.green}33` }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <p style={{ fontSize: "13px", fontWeight: 700, color: T.green }}>Total deducible est./mes</p>
+                          <p className="mono" style={{ fontSize: "18px", fontWeight: 800, color: T.green }}>{irpfTotal.toFixed(2)} €</p>
+                        </div>
+                        <p style={{ fontSize: "11px", color: T.muted, marginTop: "6px" }}>≈ <span className="mono" style={{ color: T.green, fontWeight: 700 }}>{(irpfTotal * 12).toFixed(0)} €/año</span> a declarar como gasto deducible</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div style={card()}>
+                  <STitle>⛽ Variables deducibles (este mes)</STitle>
+                  {(() => {
+                    const dv = thisMonthVar.filter(e => VAR_CATS.find(c => c.key === e.cat)?.irpf).map(e => ({ ...e, cat: VAR_CATS.find(c => c.key === e.cat) }));
+                    const tdv = dv.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
+                    return dv.length === 0 ? (
+                      <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "24px 0" }}>Sin gastos variables deducibles este mes.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                        {dv.map(e => (
+                          <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", borderRadius: "8px", background: T.faint }}>
+                            <div>
+                              <p style={{ fontSize: "12px", fontWeight: 600 }}>{e.cat?.icon} {e.note || e.cat?.label}</p>
+                              <p style={{ fontSize: "10px", color: T.muted }}>{new Date(e.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</p>
+                            </div>
+                            <span className="mono" style={{ color: T.green, fontWeight: 700, fontSize: "13px" }}>{parseFloat(e.amount).toFixed(0)} €</span>
+                          </div>
+                        ))}
+                        <div style={{ marginTop: "4px", padding: "10px 12px", borderRadius: "8px", background: `${T.green}12`, border: `1px solid ${T.green}33`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontSize: "13px", fontWeight: 700, color: T.green }}>Total mes</span>
+                          <span className="mono" style={{ fontSize: "17px", fontWeight: 800, color: T.green }}>{tdv.toFixed(2)} €</span>
+                        </div>
                       </div>
                     );
-                  })}
-                </div>
-              </div>
-            </div>
-
-            <div style={card()}>
-              <STitle>➕ Apuntar gasto</STitle>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <div>
-                  <label style={lbl}>Categoría</label>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px" }}>
-                    {VAR_CATS.map(cat => (
-                      <button key={cat.key} onClick={() => setNewVar({ ...newVar, cat: cat.key })} style={{ background: newVar.cat === cat.key ? `${cat.color}22` : T.faint, border: `1px solid ${newVar.cat === cat.key ? cat.color : T.border}`, borderRadius: "8px", padding: "7px 5px", color: newVar.cat === cat.key ? cat.color : T.muted, fontSize: "11px", fontWeight: 700, display: "flex", alignItems: "center", gap: "5px" }}>
-                        <span>{cat.icon}</span><span>{cat.label}</span>
-                      </button>
-                    ))}
+                  })()}
+                  <div style={{ marginTop: "14px", padding: "12px", background: "#f59e0b10", borderRadius: "8px", border: `1px solid ${T.gold}33` }}>
+                    <p style={{ fontSize: "11px", color: T.gold, fontWeight: 700, marginBottom: "6px" }}>⚠ Regla de oro — Autónomo</p>
+                    <p style={{ fontSize: "11px", color: T.muted, lineHeight: "1.6" }}>Para deducir: <strong style={{ color: T.text }}>factura a nombre con tu NIF</strong>. Tickets sin datos fiscales no valen. Gastos mixtos: criterio de proporcionalidad. Consulta con tu gestor antes de cada trimestre.</p>
                   </div>
                 </div>
-                <div>
-                  <label style={lbl}>Importe (€)</label>
-                  <input className="mono" value={newVar.amount} onChange={e => setNewVar({ ...newVar, amount: e.target.value })} placeholder="0,00" style={inp({ color: T.gold, fontWeight: 800, fontSize: "22px", textAlign: "center" })} />
-                </div>
-                <div>
-                  <label style={lbl}>Nota</label>
-                  <input value={newVar.note} onChange={e => setNewVar({ ...newVar, note: e.target.value })} placeholder="Ej: BP autovía, Cena cliente..." style={inp()} />
-                </div>
-                <div>
-                  <label style={lbl}>Fecha</label>
-                  <input type="date" value={newVar.date} onChange={e => setNewVar({ ...newVar, date: e.target.value })} style={inp()} />
-                </div>
-                <button onClick={addVar} style={{ background: T.gold, border: "none", borderRadius: "9px", padding: "12px", color: "#04080f", fontWeight: 800, fontSize: "14px" }}>✓ Registrar gasto</button>
-                {weekEntries.length > 0 && (
-                  <div style={{ padding: "10px", background: T.faint, borderRadius: "8px", border: `1px solid ${T.border}` }}>
-                    <p style={{ fontSize: "10px", color: T.muted, marginBottom: "7px", fontWeight: 700, textTransform: "uppercase", letterSpacing: ".05em" }}>Esta semana</p>
-                    {[...weekEntries].slice(-5).reverse().map(e => {
-                      const cat = VAR_CATS.find(c => c.key === e.cat);
-                      return <div key={e.id} style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-                        <span style={{ fontSize: "11px", color: T.muted }}>{cat?.icon} {e.note || cat?.label}</span>
-                        <span className="mono" style={{ fontSize: "11px", color: "#94a3b8" }}>{parseFloat(e.amount).toFixed(0)} €</span>
-                      </div>;
-                    })}
-                    <div style={{ borderTop: `1px solid ${T.border}`, paddingTop: "6px", marginTop: "5px", display: "flex", justifyContent: "space-between" }}>
-                      <span style={{ fontSize: "12px", color: T.muted, fontWeight: 700 }}>Total</span>
-                      <span className="mono" style={{ fontSize: "13px", fontWeight: 800, color: weekLeft < 0 ? T.red : T.green }}>{spentWeek.toFixed(0)} / {weeklyCalc.toFixed(0)} €</span>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
+            )}
           </div>
-        )}
-
-        {/* ══ IRPF ══ */}
-        {tab === "irpf" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <div style={card()}>
-              <STitle>📋 Gastos fijos deducibles (activos)</STitle>
-              {irpfItems.length === 0 ? (
-                <div style={{ padding: "24px", textAlign: "center" }}>
-                  <p style={{ color: T.muted, fontSize: "13px" }}>No hay gastos fijos marcados como deducibles activos.</p>
-                  <p style={{ color: T.muted, fontSize: "11px", marginTop: "6px" }}>Actívalos en Resumen → Gastos Fijos.</p>
-                </div>
-              ) : (
-                <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                  {irpfItems.map((item, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 12px", borderRadius: "8px", background: T.faint, border: `1px solid ${T.border2}` }}>
-                      <div style={{ flex: 1 }}>
-                        <p style={{ fontSize: "13px", fontWeight: 600 }}>{item.name}</p>
-                        <p style={{ fontSize: "11px", color: T.muted, marginTop: "2px", lineHeight: "1.4" }}>{item.note}</p>
-                      </div>
-                      <div style={{ textAlign: "right", flexShrink: 0, marginLeft: "12px" }}>
-                        <p className="mono" style={{ fontSize: "14px", fontWeight: 700, color: T.green }}>{item.monthly.toFixed(0)} €</p>
-                        <p style={{ fontSize: "9px", color: T.muted }}>mensual</p>
-                      </div>
-                    </div>
-                  ))}
-                  <div style={{ marginTop: "6px", padding: "12px", borderRadius: "8px", background: `${T.green}12`, border: `1px solid ${T.green}33` }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <p style={{ fontSize: "13px", fontWeight: 700, color: T.green }}>Total deducible est./mes</p>
-                      <p className="mono" style={{ fontSize: "18px", fontWeight: 800, color: T.green }}>{irpfTotal.toFixed(2)} €</p>
-                    </div>
-                    <p style={{ fontSize: "11px", color: T.muted, marginTop: "6px" }}>≈ <span className="mono" style={{ color: T.green, fontWeight: 700 }}>{(irpfTotal * 12).toFixed(0)} €/año</span> a declarar como gasto deducible</p>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div style={card()}>
-              <STitle>⛽ Variables deducibles (este mes)</STitle>
-              {(() => {
-                const dv = thisMonthVar.filter(e => VAR_CATS.find(c => c.key === e.cat)?.irpf).map(e => ({ ...e, cat: VAR_CATS.find(c => c.key === e.cat) }));
-                const tdv = dv.reduce((s, e) => s + parseFloat(e.amount || 0), 0);
-                return dv.length === 0 ? (
-                  <p style={{ color: T.muted, fontSize: "12px", textAlign: "center", padding: "24px 0" }}>Sin gastos variables deducibles este mes.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
-                    {dv.map(e => (
-                      <div key={e.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 12px", borderRadius: "8px", background: T.faint }}>
-                        <div>
-                          <p style={{ fontSize: "12px", fontWeight: 600 }}>{e.cat?.icon} {e.note || e.cat?.label}</p>
-                          <p style={{ fontSize: "10px", color: T.muted }}>{new Date(e.date).toLocaleDateString("es-ES", { day: "2-digit", month: "short" })}</p>
-                        </div>
-                        <span className="mono" style={{ color: T.green, fontWeight: 700, fontSize: "13px" }}>{parseFloat(e.amount).toFixed(0)} €</span>
-                      </div>
-                    ))}
-                    <div style={{ marginTop: "4px", padding: "10px 12px", borderRadius: "8px", background: `${T.green}12`, border: `1px solid ${T.green}33`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span style={{ fontSize: "13px", fontWeight: 700, color: T.green }}>Total mes</span>
-                      <span className="mono" style={{ fontSize: "17px", fontWeight: 800, color: T.green }}>{tdv.toFixed(2)} €</span>
-                    </div>
-                  </div>
-                );
-              })()}
-              <div style={{ marginTop: "14px", padding: "12px", background: "#f59e0b10", borderRadius: "8px", border: `1px solid ${T.gold}33` }}>
-                <p style={{ fontSize: "11px", color: T.gold, fontWeight: 700, marginBottom: "6px" }}>⚠ Regla de oro — Autónomo</p>
-                <p style={{ fontSize: "11px", color: T.muted, lineHeight: "1.6" }}>Para deducir: <strong style={{ color: T.text }}>factura a nombre con tu NIF</strong>. Tickets sin datos fiscales no valen. Gastos mixtos: criterio de proporcionalidad. Consulta con tu gestor antes de cada trimestre.</p>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
+        </div>
+      );
+    }
 
     ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
   </script>
 </body>
+
 </html>

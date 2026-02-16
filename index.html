@@ -16,6 +16,10 @@
   <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
   <style>
     body {
       margin: 0;
@@ -27,9 +31,37 @@
 <body>
   <div id="root"></div>
   <script>
+    // --- CONFIGURACIÓN DE FIREBASE ---
+    // El usuario debe completar esto con sus claves de Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDHFREf9rDnMeNMjBhpUfwVSCV_Weiu9wc",
+      authDomain: "control-hogar2.firebaseapp.com",
+      databaseURL: "https://control-hogar2-default-rtdb.europe-west1.firebasedatabase.app/",
+      projectId: "control-hogar2",
+      storageBucket: "control-hogar2.firebasestorage.app",
+      messagingSenderId: "1022589570094",
+      appId: "1:1022589570094:web:dba11730deea0784fe23bf"
+    };
+
+    // Inicializar Firebase
+    if (firebaseConfig.apiKey !== "PONER_AQUI_apiKey") {
+      firebase.initializeApp(firebaseConfig);
+    }
+
     window.storage = {
-      get: function (key) { return Promise.resolve({ value: localStorage.getItem(key) }); },
-      set: function (key, val) { localStorage.setItem(key, val); return Promise.resolve(); }
+      get: function (key) {
+        // Primero intentamos local
+        const local = localStorage.getItem(key);
+        return Promise.resolve({ value: local });
+      },
+      set: function (key, val) {
+        localStorage.setItem(key, val);
+        // Si Firebase está configurado, guardamos también allí
+        if (firebase.apps.length) {
+          firebase.database().ref('data').set(JSON.parse(val));
+        }
+        return Promise.resolve();
+      }
     };
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function (e) { console.log('SW error:', e); });
@@ -302,22 +334,41 @@
       const [newAlquiler, setNewAlquiler] = useState({ ...blankIng, name: "Alquiler" });
       const [newExtra, setNewExtra] = useState({ ...blankExt });
 
-      // ── LOAD ──
+      // ── LOAD & SYNC ──
       useEffect(() => {
+        // Carga inicial local
         loadData().then(d => {
           if (d) {
-            if (d.ingresos) setIngresos(d.ingresos);
-            if (d.alquileres) setAlquileres(d.alquileres);
-            if (d.gastosF) setGastosF(d.gastosF);
-            if (d.gastosExtra) setGastosExtra(d.gastosExtra);
-            if (d.varItems) setVarItems(d.varItems);
-            if (d.savingsPct) setSavingsPct(d.savingsPct);
-            if (d.weeklyLimit) setWeeklyLimit(d.weeklyLimit);
-            if (d.saldo !== undefined) setSaldo(d.saldo);
+            updateState(d);
           }
           setReady(true);
         });
+
+        // Suscripción a Firebase si está configurado
+        if (firebase.apps.length) {
+          const dbRef = firebase.database().ref('data');
+          dbRef.on('value', (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+              updateState(data);
+              // Actualizamos local para persistencia offline
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            }
+          });
+          return () => dbRef.off();
+        }
       }, []);
+
+      const updateState = (d) => {
+        if (d.ingresos) setIngresos(d.ingresos);
+        if (d.alquileres) setAlquileres(d.alquileres);
+        if (d.gastosF) setGastosF(d.gastosF);
+        if (d.gastosExtra) setGastosExtra(d.gastosExtra);
+        if (d.varItems) setVarItems(d.varItems);
+        if (d.savingsPct) setSavingsPct(d.savingsPct);
+        if (d.weeklyLimit) setWeeklyLimit(d.weeklyLimit);
+        if (d.saldo !== undefined) setSaldo(d.saldo);
+      };
 
       // ── SAVE ──
       const persist = useCallback((patch = {}) => {
@@ -437,7 +488,15 @@
             </div>
 
             {/* SALDO */}
-            <SaldoWidget saldo={saldo} setSaldo={setSaldo} totalIncome={totalIncome} totalFixed={totalFixed} spentVar={spentMonth} autoSave={autoSave} onSave={() => persist({ saldo })} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+              <SaldoWidget saldo={saldo} setSaldo={setSaldo} totalIncome={totalIncome} totalFixed={totalFixed} spentVar={spentMonth} autoSave={autoSave} onSave={() => persist({ saldo })} />
+              {firebase.apps.length > 0 && (
+                <div style={{ fontSize: '10px', color: T.green, display: 'flex', alignItems: 'center', gap: '4px', background: `${T.green}11`, padding: '4px 8px', borderRadius: '20px', border: `1px solid ${T.green}33` }}>
+                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: T.green }}></span>
+                  En línea (Sincronizado)
+                </div>
+              )}
+            </div>
 
             {/* ══ RESUMEN ══ */}
             {tab === "resumen" && (

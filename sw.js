@@ -9,6 +9,8 @@ const ASSETS = [
     "https://unpkg.com/react@18/umd/react.production.min.js",
     "https://unpkg.com/react-dom@18/umd/react-dom.production.min.js",
     "https://unpkg.com/@babel/standalone/babel.min.js",
+    "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js",
     "https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500;600&display=swap"
 ];
 
